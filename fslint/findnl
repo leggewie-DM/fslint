@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # findnl - find problematic filenames
-# Copyright © 2000-2006 by Pádraig Brady <P@draigBrady.com>.
+# Copyright © 2000-2007 by Pádraig Brady <P@draigBrady.com>.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,7 +108,7 @@ if [ "$level" != "p" ]; then
     # Note LC_CTYPE=C in fslver causes grep below to report
     # valid UTF8 [:alnum:] chars as problematic, so unset here
     unset LC_CTYPE
-    # Note this slows grep down 320% on V2.5.1 at least.
+    # Note this slows grep down 320% on FC4 (grep-2.5.1) at least.
     # Hence the minimum fslint-gui run time will be about 6 times larger
     # due to the polling mechanism it uses.
 #else
@@ -150,6 +150,7 @@ eval characters=\$characters$level
 #Note could run through basename after if required?
 
 find "$@" -printf "$FPF\0" |
+sort -zu |         #merge files (indirectly) specified multiple times
 tr '\n\0' '\1\n' | #convert \n to \1 so grep works
 grep -E "$expressions|(.*/[^/]*[^]$characters-]+[^/]*$)" | #note ] 1st & - last
 tr '\n\1' '\0\n' | #convert back from \1 to \n

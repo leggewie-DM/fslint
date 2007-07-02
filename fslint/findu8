@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # findu8 - find files with invalid utf8 names
-# Copyright © 2000-2006 by Pádraig Brady <P@draigBrady.com>.
+# Copyright © 2000-2007 by Pádraig Brady <P@draigBrady.com>.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,12 +48,14 @@ done
 
 . $script_dir/supprt/getfpf "$argsToPassOn"
 
-find "$@" -printf "$FPF\n" |
+find "$@" -printf "$FPF\0" |
+sort -zu | #merge files (indirectly) specified multiple times
+tr '\n\0' '\1\n' | #convert \n to \1 so grep works
 LANG=C grep -E '[^ -~]' | #filter out purely ASCII names
 while read name; do
     echo "$name" | iconv --from=utf8 --to=utf8 >/dev/null 2>&1 || echo "$name"
 done |
-tr '\n' '\0' |
+tr '\n\1' '\0\n' | #convert back from \1 to \n
 if [ ! -p /proc/self/fd/1 ]; then
     xargs -r0 ls -b1Ud --color=auto --
 else

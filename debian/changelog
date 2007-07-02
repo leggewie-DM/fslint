@@ -1,3 +1,53 @@
+fslint (2.22-2) unstable; urgency=low
+
+  * Minor packaging cleanups suggested by Bart Martens
+
+ -- Pádraig Brady <P@draigBrady.com>  Mon, 02 Jul 2007 07:50:00 +0000
+
+fslint (2.22-1) unstable; urgency=low
+
+  * Bump to release version
+
+ -- Pádraig Brady <P@draigBrady.com>  Thu, 28 Jun 2007 16:02:00 +0000
+
+fslint (2.21-1) unstable; urgency=low
+
+  * Bump to devel version
+  * Remove findup -m cross device limitation (Closes: #426522)
+
+ -- Pádraig Brady <P@draigBrady.com>  Fri, 30 Mar 2007 08:22:00 +0000
+
+fslint (2.20-1) unstable; urgency=low
+
+  * Update description to make FSlint easier to find (Closes: #413907)
+  * Bump to release version
+
+ -- Pádraig Brady <P@draigBrady.com>  Fri, 09 Mar 2007 07:54:00 +0000
+
+fslint (2.19-2) unstable; urgency=low
+
+  * add md5sum_approx
+
+ -- Pádraig Brady <P@draigBrady.com>  Fri, 02 Feb 2007 00:34:00 +0000
+
+fslint (2.19-1) unstable; urgency=low
+
+  * Bump to devel version
+
+ -- Pádraig Brady <P@draigBrady.com>  Tue, 26 Dec 2006 14:54:00 +0000
+
+fslint (2.18-1) unstable; urgency=low
+
+  * Bump to release version (Closes: #379999, #380208, #397046)
+
+ -- Pádraig Brady <P@draigBrady.com>  Mon, 25 Dec 2006 23:54:00 +0000
+
+fslint (2.17-1) unstable; urgency=low
+
+  * Bump to devel version
+
+ -- Pádraig Brady <P@draigBrady.com>  Tue, 28 Nov 2006 17:25:30 +0000
+
 fslint (2.16-1) unstable; urgency=low
 
   * Cleanups suggested by lintian

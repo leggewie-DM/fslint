@@ -1,15 +1,26 @@
 # Exit early if there is an error
 set -e
 
+# Store \n in a variable for use in scripts
+LF='
+'
+
 # The following is essentially to speedup sort & grep
 # (which redhat really crippled speedwise around redhat 8/9 for UTF8 locales).
 # Note since glibc 2.3.3 this causes (error) messages from
 # subordinate tools to not use the charset in LC_MESSAGES.
 # (see `info libc "Charset conversion in gettext"`).
 export LC_CTYPE=C #uncomment for speed (noting the caveats above)
+export LC_COLLATE=C #for even more speed
+
+# I noticed Fedora 7 was much slower than FC4 for grep.
+# The following change restores the faster operation.
+# Also DFA seems more correct wrt multibyte input?
+# https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=121313
+export GREP_USE_DFA=1
 
 Version() {
-  echo "FSlint 2.16" && exit
+  echo "FSlint 2.22" && exit
 }
 
 check_uniq() {

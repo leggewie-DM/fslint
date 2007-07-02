@@ -1,13 +1,17 @@
 %define mandriva %([ -f /etc/mandrake-release ] && echo 1 || echo 0)
+%define suse %([ -f /etc/SuSE-release ] && echo 1 || echo 0)
 
 Name:           fslint
-Version:        2.16
+Version:        2.22
 %if %{mandriva}
 Release:        1.mdk
-%else
+%endif
+%if %{suse}
+Release:        1.suse
+%endif
+%if !%{mandriva} && !%{suse}
 Release:        1
 %endif
-Epoch:          0
 Summary:        FSlint - a utility to find and clean "lint" on a filesystem
 
 Group:          Applications/File
@@ -17,17 +21,24 @@ Source0:        http://www.pixelbeat.org/fslint/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:      noarch
-BuildRequires:  gettext, desktop-file-utils
+BuildRequires:  gettext >= 0.13, desktop-file-utils
 
+Requires:       python >= 2.0, cpio
 %if %{mandriva}
-Requires:       python >= 0:2.0, pygtk2.0, pygtk2.0-libglade, cpio
-%else
-Requires:       python >= 0:2.0, pygtk2, pygtk2-libglade, cpio
+Requires:       pygtk2.0, pygtk2.0-libglade
+%endif
+%if %{suse}
+Requires:       python-gtk >= 2.0
+%endif
+%if !%{mandriva} && !%{suse}
+Requires:       pygtk2, pygtk2-libglade
 %endif
 
 %description
-FSlint is a toolkit to find all redundant disk usage (duplicate files
-for e.g.). It includes a GUI as well as a command line interface.
+FSlint is a utility to find redundant disk usage like duplicate files
+for example. It can be used to reclaim disk space and fix other problems
+like file naming issues and bad symlinks etc.
+It includes a GTK+ GUI as well as a command line interface.
 
 
 %prep
@@ -49,7 +60,7 @@ install -dm 755 $RPM_BUILD_ROOT%{_mandir}/man1
 install -pm 644 fslint.glade fslint_icon.png \
   $RPM_BUILD_ROOT%{_datadir}/%{name}
 install -dm 755 $RPM_BUILD_ROOT%{_datadir}/pixmaps
-ln -s %{_datadir}/%{name}/fslint_icon.png $RPM_BUILD_ROOT%{_datadir}/pixmaps
+ln -s ../%{name}/fslint_icon.png $RPM_BUILD_ROOT%{_datadir}/pixmaps
 install -pm 755 fslint/{find*,fslint,zipdir} \
   $RPM_BUILD_ROOT%{_datadir}/%{name}/fslint
 install -pm 755 fslint/fstool/* \
@@ -57,6 +68,8 @@ install -pm 755 fslint/fstool/* \
 install -pm 644 fslint/supprt/fslver \
   $RPM_BUILD_ROOT%{_datadir}/%{name}/fslint/supprt
 install -pm 755 fslint/supprt/get* \
+  $RPM_BUILD_ROOT%{_datadir}/%{name}/fslint/supprt
+install -pm 755 fslint/supprt/md5sum_approx \
   $RPM_BUILD_ROOT%{_datadir}/%{name}/fslint/supprt
 install -pm 755 fslint/supprt/rmlint/* \
   $RPM_BUILD_ROOT%{_datadir}/%{name}/fslint/supprt/rmlint
@@ -90,8 +103,17 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Mar 09 2007 Pádraig Brady
+- Put more info in description so the package is
+  easier to find in repositories
+
+* Wed Nov 01 2006 Pádraig Brady
+- Support SuSE
+- Removed 0 Epoch to align with fedora policies
+
 * Thu Jun 22 2006 Pádraig Brady
 - Added man pages for fslint and fslint-gui
+- Support Mandriva
 - Other minor cleanups to align with debian package
   (suggested by lintian)
 

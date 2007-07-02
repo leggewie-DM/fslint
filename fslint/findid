@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # findid - find invalid user ids
-# Copyright © 2000-2006 by Pádraig Brady <P@draigBrady.com>.
+# Copyright © 2000-2007 by Pádraig Brady <P@draigBrady.com>.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ done
 reUsers="`cut -f3 -d: /etc/passwd | tr '\n' '|'`0"
 reGroups="`cut -f3 -d: /etc/group | tr '\n' '|'`0"
 find "$@" -printf "%U:%G:$FPF\0" |
+sort -zu | #merge files (indirectly) specified multiple times
 tr '\n\0' '\1\n' |
 grep -Ev "^($reUsers):($reGroups):" |
 cut -d: -f3- |
