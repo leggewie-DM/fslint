@@ -1,3 +1,31 @@
+2.26 20/05/2008
+	* Translations:
+		* Added: Czech, Turkish.
+		* Updated: French, German, Malay.
+	* Fixes:
+		* Don't ignore duplicate files with '\' chars in the path.
+		  This issue was reported by Andrew U. Frank.
+		* Don't abort reporting duplicates if the GUI can't process
+		  a particular file. This issue was reported by Andrew U. Frank.
+		* When finding dupes, handle \f\r\v characters within filenames,
+		  rather than displaying an exception.
+		* Use and document better syntax for excluding paths.
+		* Honour/sanitize user specified wildcards for excluding paths.
+		* Tweak "fix whitespace" script to run on dash (ubuntu).
+		* Allow cli scripts to run from paths containing whitespace.
+		* Fix erroneous reordering of certain find command parameters.
+	* Improvements:
+		* Make file deletion much easier by supporting the 'Delete' key,
+		  auto removing groups from display when only 1 item remaining,
+		  giving the option to not confirm every delete operation and
+		  not resetting column widths on every delete operation.
+		* When we auto select packages for deletion due to dependencies,
+		  group all selected packages together for easier review.
+		* Indicate using the mouse pointer that the application is busy,
+		  during the possibly long cleaning/deleting/merging processes.
+		* Exclude more commonly aliased binaries when searching
+		  for conflicting program names in the $PATH.
+
 2.24 19/09/07
 	* Translations:
 		* Added: Hewbrew, Italian, Russian.
@@ -31,7 +59,7 @@
 		  in the indenting at the start of a line, and the user
 		  can select to fix with tabs or spaces.
 		* Set mouse pointer to "busy interactive" during searches.
-		  This makes it more obvious that work is progressing and
+		  This makes it more obvious that work is progressing and that
 		  only parts of the GUI will be responsive.
 		* Simplify the default output from the findup CLI tool, to make
 		  it easier to pipe. Use the --sizes option to get old format.
