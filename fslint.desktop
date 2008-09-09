@@ -4,6 +4,5 @@ Comment=File System Lint
 Exec=fslint-gui
 Terminal=false
 Type=Application
-Icon=fslint_icon.png
-Encoding=UTF-8
+Icon=fslint_icon
 Categories=System;Filesystem;GTK;
