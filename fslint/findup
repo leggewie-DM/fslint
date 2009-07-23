@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # findup - find duplicate files
-# Copyright © 2000-2008 by Pádraig Brady <P@draigBrady.com>.
+# Copyright © 2000-2009 by Pádraig Brady <P@draigBrady.com>.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -122,7 +122,7 @@ do
     -t)
         t="t" ;;
     *)
-        argsToPassOn="$argsToPassOn '$arg'"
+        argsToPassOn="$argsToPassOn $(shell_quote "$arg")" ;;
     esac
 done
 
@@ -138,8 +138,8 @@ fi
 
 check_uniq
 
-if [ `find . -maxdepth 0 -printf "%D" 2> /dev/null` = "D" ]
-then
+dev_id="$(find /bin/sh -printf '%D' 2>/dev/null)"
+if [ "$dev_id" = "D" ] || [ ! "$dev_id" ]; then
     devFmt="\060" #0
 else
     devFmt=%D #This is new in findutils-4.2 and will help find more duplicates
@@ -195,8 +195,8 @@ cut -d' ' -f3- |           #get filenames (and leave separating lines)
 
 if [ "$mode" ]; then
   if [ ! $mode = "summary" ]; then # external call to python as this is faster
-    if "$script_dir"/supprt/rmlint/fixdup.py </dev/null 2>/dev/null; then
-        "$script_dir"/supprt/rmlint/fixdup.py $t$mode
+    if "$script_dir"/supprt/rmlint/fixdup </dev/null 2>/dev/null; then
+        "$script_dir"/supprt/rmlint/fixdup $t$mode
     elif "$script_dir"/supprt/rmlint/fixdup.sh </dev/null 2>/dev/null; then
         "$script_dir"/supprt/rmlint/fixdup.sh $t$mode
     else

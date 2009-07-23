@@ -8,7 +8,7 @@
 
 """
  FSlint - A utility to find File System lint.
- Copyright © 2000-2008 by Pádraig Brady <P@draigBrady.com>.
+ Copyright © 2000-2009 by Pádraig Brady <P@draigBrady.com>.
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -27,16 +27,12 @@ import locale
 import gtk
 import gtk.glade
 
-import types, os, sys, time, stat, tempfile
-
-# Maintain compatibility with Python 2.2 and below,
-# while getting rid of warnings in newer pyGtks.
-try:
-    True, False
-except NameError:
-    True, False = 1, 0
+import types, os, sys, pipes, time, stat, tempfile
 
 time_commands=False #print sub commands timing on status line
+
+def puts(string=""): #print is problematic in python 3
+    sys.stdout.write(string+'\n')
 
 liblocation=os.path.dirname(os.path.abspath(sys.argv[0]))
 locale_base=liblocation+'/po/locale'
@@ -57,7 +53,7 @@ class i18n:
 
     def __init__(self):
         self._init_translations()
-        self._init_locale()
+        self._init_locale() #after translations in case they reset codeset
         self._init_preferred_encoding()
 
     def _init_translations(self):
@@ -66,15 +62,13 @@ class i18n:
         gettext.install("fslint", locale_base, unicode=1)
         global N_ #translate string but not at point of definition
         def N_(string): return string
-        td=gettext.bindtextdomain("fslint",locale_base)
+        gettext.bindtextdomain("fslint",locale_base)
         gettext.textdomain("fslint")
-        #This call should be redundant
-        #(done correctly in gettext) for python 2.3
-        try:
-            gtk.glade.bindtextdomain("fslint",td) #note sets codeset to utf-8
-        except:
-            #if no glade.bindtextdomain then we'll do without
-            pass
+        #Note gettext does not set libc's domain as
+        #libc and Python may have different message catalog
+        #formats (e.g. on Solaris). So make explicit calls.
+        locale.bindtextdomain("fslint",locale_base)
+        locale.textdomain("fslint")
 
     def _init_locale(self):
         try:
@@ -84,9 +78,8 @@ class i18n:
             pass
 
     def _init_preferred_encoding(self):
-        #Note python 2.3 has the nicer locale.getpreferredencoding()
-        #Note also that this encoding name is canonlicalised already
-        self.preferred_encoding=locale.nl_langinfo(locale.CODESET)
+        #Note that this encoding name is canonlicalised already
+        self.preferred_encoding=locale.getpreferredencoding()
         #filename encoding can be different from default encoding
         filename_encoding = os.environ.get("G_FILENAME_ENCODING")
         if filename_encoding:
@@ -99,25 +92,21 @@ class i18n:
     class unicode_displayable(unicode):
         """translate non displayable chars to an appropriate representation"""
         translate_table=range(0x2400,0x2420) #control chars
-        def displayable(self,exclude):
+        #Since python 2.2 this will be a new style class as
+        #we are subclassing the builtin (immutable) unicode type.
+        #Therefore we can make a factory function with the following.
+        def __new__(cls,string,exclude):
             if exclude:
-                curr_table=self.__class__.translate_table[:] #copy
+                curr_table=cls.translate_table[:] #copy
                 for char in exclude:
                     try:
                         curr_table[ord(char)]=ord(char)
                     except:
                         pass #won't be converted anyway
             else:
-                curr_table=self.__class__.translate_table
-            return self.translate(curr_table)
-        #Note in python 2.2 this will be a new style class as
-        #we are subclassing the builtin (immutable) unicode type.
-        #Therefore you can make a factory function with the following.
-        #I.E. you can do uc=self.unicode_displayable(uc) below
-        #(the __class__ is redundant in python 2.2 also).
-        #def __new__(cls,string):
-        #    translated_string=unicode(string).translate(cls.translate_table)
-        #    return unicode.__new__(cls, translated_string)
+                curr_table=cls.translate_table
+            translated_string=unicode(string).translate(curr_table)
+            return unicode.__new__(cls, translated_string)
 
     def displayable_utf8(self,orig,exclude="",path=False):
         """Convert to utf8, and also convert chars that are not
@@ -151,7 +140,7 @@ class i18n:
                     # question mark representation, and dejavu also since 1.12.
                     # Alternatively I could: uc=unicode(orig,"latin-1") as that
                     # has a representation for each byte, but it's not general.
-        uc=self.__class__.unicode_displayable(uc).displayable(exclude)
+        uc=self.unicode_displayable(uc, exclude)
         return uc.encode("utf-8")
 
     def g_filename_from_utf8(self, string):
@@ -164,9 +153,9 @@ I18N=i18n() #call first so everything is internationalized
 
 import getopt
 def Usage():
-    print _("Usage: %s [OPTION] [PATHS]") % os.path.split(sys.argv[0])[1]
-    print   "    --version       " + _("display version")
-    print   "    --help          " + _("display help")
+    puts(_("Usage: %s [OPTION] [PATHS]") % os.path.split(sys.argv[0])[1])
+    puts(  "    --version       " + _("display version"))
+    puts(  "    --help          " + _("display help"))
 
 try:
     lOpts, lArgs = getopt.getopt(sys.argv[1:], "", ["help","version"])
@@ -179,11 +168,11 @@ try:
         sys.exit(None)
 
     if ("--version","") in lOpts:
-        print "FSlint 2.28"
+        puts("FSlint 2.40")
         sys.exit(None)
 except getopt.error, msg:
-    print msg
-    print
+    puts(msg)
+    puts()
     Usage()
     sys.exit(2)
 
@@ -196,7 +185,7 @@ def human_num(num, divisor=1, power=""):
     elif divisor == 1024:
         powers=["  ","Ki","Mi","Gi","Ti","Pi"]
     else:
-        raise ValueError, "Invalid divisor"
+        raise ValueError("Invalid divisor")
     if not power: power=powers[0]
     while num >= 1000: #4 digits
         num /= divisor
@@ -214,16 +203,16 @@ class pathInfo:
     def __init__(self, path):
         stat_val = os.lstat(path)
 
-        date = time.ctime(stat_val[stat.ST_MTIME])
+        date = time.ctime(stat_val.st_mtime)
         month_time = date[4:16]
         year = date[-5:]
-        timediff = time.time()-stat_val[stat.ST_MTIME]
+        timediff = time.time()-stat_val.st_mtime
         if timediff > 15552000: #6months
             date = month_time[0:6] + year
         else:
             date = month_time
 
-        mode = stat_val[stat.ST_MODE]
+        mode = stat_val.st_mode
         if stat.S_ISREG(mode):
             colour = '' #default
             if mode & (stat.S_IXGRP|stat.S_IXUSR|stat.S_IXOTH):
@@ -239,12 +228,12 @@ class pathInfo:
 
         self.ls_colour = colour
         self.du = stat_val.st_blocks*512
-        self.size = stat_val[stat.ST_SIZE]
-        self.uid = stat_val[stat.ST_UID]
-        self.gid = stat_val[stat.ST_GID]
+        self.size = stat_val.st_size
+        self.uid = stat_val.st_uid
+        self.gid = stat_val.st_gid
         self.ls_date = date
-        self.mtime = stat_val[stat.ST_MTIME]
-        self.inode = stat_val[stat.ST_INO]
+        self.mtime = stat_val.st_mtime
+        self.inode = stat_val.st_ino
 
 class GladeWrapper:
     """
@@ -280,7 +269,7 @@ class GladeWrapper:
 #     process.read() #timeout is optional
 #     handle(process.outdata, process.errdata)
 #     del(process)
-import time, os, select, signal
+import select, signal
 class subProcess:
     """Class representing a child process. It's like popen2.Popen3
        but there are three main differences.
@@ -323,7 +312,7 @@ class subProcess:
         os.dup2(self.outw,1) #stdout to write side of pipe
         os.dup2(self.errw,2) #stderr to write side of pipe
         #stdout & stderr connected to pipe, so close all other files
-        map(os.close,[self.outr,self.outw,self.errr,self.errw])
+        map(os.close,(self.outr,self.outw,self.errr,self.errw))
         try:
             cmd = ['/bin/sh', '-c', cmd]
             os.execvp(cmd[0], cmd)
@@ -361,6 +350,12 @@ class subProcess:
     def kill(self):
         os.kill(-self.pid, signal.SIGTERM) #kill whole group
 
+    def pause(self):
+        os.kill(-self.pid, signal.SIGSTOP) #pause whole group
+
+    def resume(self):
+        os.kill(-self.pid, signal.SIGCONT) #resume whole group
+
     def cleanup(self):
         """Wait for and return the exit status of the child process."""
         self.cleaned=True
@@ -397,7 +392,7 @@ dist_type=distroType()
 
 def human_space_left(where):
     (device, total, used_b, avail, used_p, mount)=\
-    os.popen("df -h %s | tail -1"%where).read().split()
+    os.popen("df -Ph %s | tail -n1" % where).read().split()
     translation_map={"percent":used_p, "disk":mount, "size":avail}
     return _("%(percent)s of %(disk)s is used leaving %(size)sB available") %\
              translation_map
@@ -471,21 +466,28 @@ class dlgUserInteraction(GladeWrapper):
             self.again = self.chkAgain.get_active()
         self.GtkWindow.destroy()
 
-class dlgPathSel(GladeWrapper):
+class dlgPath(GladeWrapper):
 
     def init(self, app):
         self.app = app
         self.pwd = self.app.pwd
 
-    def show(self, fileOps=0, filename=None):
-        self.canceled=1
+    def show(self, fileOps=False, filename=""):
+        self.canceled = True
         self.fileOps = fileOps
-        if not filename: filename=self.pwd+'/'
-        self.GtkWindow.set_filename(filename)
         if self.fileOps:
-            self.GtkWindow.show_fileop_buttons()
+            # Change to last folder as more likely to want
+            # to save results there
+            self.GtkWindow.set_action(gtk.FILE_CHOOSER_ACTION_SAVE)
+            self.GtkWindow.set_current_folder(self.pwd)
+            self.GtkWindow.set_current_name(filename)
         else:
-            self.GtkWindow.hide_fileop_buttons()
+            self.GtkWindow.set_action(gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+            # set_filename doesn't highlight dir after first call
+            # so using select_filename for consistency. Also I think
+            # select_filename is better than set_current_folder as
+            # it allows one to more easily select items at the same level
+            self.GtkWindow.select_filename(self.pwd)
         self.GtkWindow.set_transient_for(self.app.GtkWindow)#center on main win
         self.GtkWindow.show()
         if self.GtkWindow.modal:
@@ -499,14 +501,22 @@ class dlgPathSel(GladeWrapper):
     def quit(self, *args):
         self.GtkWindow.hide()
         if not self.canceled:
-            self.pwd = self.GtkWindow.history_pulldown.get_children()[0].get()
+            if self.fileOps:
+                self.pwd = self.GtkWindow.get_current_folder()
+            else:
+                self.pwd = self.GtkWindow.get_filename()
         if self.GtkWindow.modal:
             gtk.main_quit()
         return True #Don't let window be destroyed
 
-    def on_okdirs_clicked(self, *args):
+    def on_ok_clicked(self, *args):
         if self.fileOps: #creating new item
             file = self.GtkWindow.get_filename()
+            if not file:
+                return True #Don't let window be destroyed
+            if os.path.isdir(file):
+                self.GtkWindow.set_current_folder(file)
+                return True #Don't let window be destroyed
             if os.path.exists(file):
                 if os.path.isfile(file):
                     (response,) = self.app.msgbox(
@@ -518,7 +528,7 @@ class dlgPathSel(GladeWrapper):
                 else:
                     self.app.msgbox(_("You can't overwrite ") + file)
                     return
-        self.canceled=0
+        self.canceled = False
         self.quit()
 
 class fslint(GladeWrapper):
@@ -530,9 +540,10 @@ class fslint(GladeWrapper):
         os.close(0) #don't hang if any sub cmd tries to read from stdin
         self.pwd=os.path.realpath(os.curdir)
         GladeWrapper.__init__(self, Filename, WindowName)
-        self.dlgPathSel = dlgPathSel(liblocation+"/fslint.glade", "PathSel")
-        self.dlgPathSel.init(self)
+        self.dlgPath = dlgPath(liblocation+"/fslint.glade", "PathChoose")
+        self.dlgPath.init(self)
         self.confirm_delete = True
+        self.confirm_delete_group = True
         self.confirm_clean = True
         #Just need to keep this tuple in sync with tabs
         (self.mode_up, self.mode_pkgs, self.mode_nl, self.mode_sn,
@@ -558,7 +569,7 @@ class fslint(GladeWrapper):
             self.mode_tf:_("Possibly old temporary files"),
             self.mode_bl:_("Problematic symbolic links"),
             self.mode_id:_("Files with missing user IDs"),
-            self.mode_ed:_("Empty directories"),
+            self.mode_ed:_("Directory branches with no files"),
             self.mode_ns:_("Executables still containing debugging info"),
             self.mode_rs:_("Erroneous whitespace in a text file")
         }
@@ -611,14 +622,22 @@ class fslint(GladeWrapper):
         while self.fslintproc.read(timeout=0.1):
             while gtk.events_pending(): gtk.main_iteration(False)
             if self.stopflag:
+                if self.paused:
+                    self.fslintproc.resume()
                 self.fslintproc.kill()
                 break
+            elif self.pauseflag:
+                self.pause_search()
         else:
             self.fslintproc.outdata=self.fslintproc.outdata.split(delim)[:-1]
             ret = (self.fslintproc.outdata, self.fslintproc.errdata)
-        del(self.fslintproc)
+        #we can't control internal processing at present so hide buttons
+        self.pause.hide()
+        self.resume.hide()
+        self.stop.hide()
         self.status.set_text(_("processing..."))
         while gtk.events_pending(): gtk.main_iteration(False)
+        del(self.fslintproc)
         if self.stopflag:
             raise self.UserAbort
         else:
@@ -644,22 +663,19 @@ class fslint(GladeWrapper):
             return ""
 
         if self.ok_dirs.rows == 0:
-            #raise _("No search paths specified") #py 2.2.2 can't raise unicode
             return _("No search paths specified")
 
         search_dirs = ""
         for row in range(self.ok_dirs.rows):
-            search_dirs = search_dirs + \
-                          " '" + self.ok_dirs.get_row_data(row) + "'"
-        exclude_dirs=""
+            search_dirs += " " + pipes.quote(self.ok_dirs.get_row_data(row))
 
+        exclude_dirs=""
         for row in range(self.bad_dirs.rows):
             if exclude_dirs == "":
-                exclude_dirs = '\(' + ' -path "'
+                exclude_dirs = '\(' + ' -path '
             else:
-                exclude_dirs += ' -o -path "'
-            path=self.bad_dirs.get_row_data(row)
-            exclude_dirs += path + '"'
+                exclude_dirs += ' -o -path '
+            exclude_dirs += pipes.quote(self.bad_dirs.get_row_data(row))
         if exclude_dirs != "":
             exclude_dirs += ' \) -prune -o '
 
@@ -698,7 +714,7 @@ class fslint(GladeWrapper):
         cmap_cache=clist.get_data("cmap_cache")
         if cmap_cache == None:
             cmap_cache={'':None}
-        if not cmap_cache.has_key(colour):
+        if colour not in cmap_cache:
             cmap_cache[colour]=cmap.alloc_color(colour)
         clist.set_data("cmap_cache",cmap_cache)
         return cmap_cache[colour]
@@ -747,7 +763,7 @@ class fslint(GladeWrapper):
         if not packages: return
         if level==0: self.checked_pkgs={}
         for package in packages:
-            #print "\t"*level+package
+            #puts("\t"*level+package)
             self.checked_pkgs[package]=''
         if dist_type.rpm:
             cmd  = r"rpm -e --test " + ' '.join(packages) + r" 2>&1 | "
@@ -764,12 +780,12 @@ class fslint(GladeWrapper):
             cmd += r"'s/Conflicts With .*//' -e 's/ \{18\}//g' -e "
             cmd += r"'s/ \{1,\}$/\n/'"
         else:
-            raise "unknown distro"
+            raise RuntimeError("unknown distro")
         process = os.popen(cmd)
         requires = process.read()
         del(process)
         new_packages = [p for p in requires.split()
-                        if not self.checked_pkgs.has_key(p)]
+                        if p not in self.checked_pkgs]
         self.whatRequires(new_packages, level+1)
         if level==0: return self.checked_pkgs.keys()
 
@@ -787,7 +803,8 @@ class fslint(GladeWrapper):
         elif dist_type.pacman:
             cmd  = r"pacman -Q | sed -n 's/^\([^ ]\{1,\}\) .*/\1/p' | "
             cmd += r"LC_ALL=C xargs pacman -Qi | sed -n -e "
-            cmd += r"'s/Name *: *\(.*\)/\1\t/p' -e 's/Size *: *\(.*\)/\1|/p' | "
+            cmd += r"'s/Name *: *\(.*\)/\1\t/p' -e "
+            cmd += r"'s/\(Installed \)\?Size *: *\([^ ]\+\)\( K\)\?/\2|/p' | "
             cmd += r"tr '\n' ' ' | tr -d ' ' | tr '|' '\n'"
         else:
             return ("", _("Sorry, FSlint does not support this functionality \
@@ -797,14 +814,19 @@ on your system at present."))
         row = 0
         for pkg_info in po:
             pkg_name, pkg_size= pkg_info.split()
-            pkg_size = int(pkg_size)
+            pkg_size = int(float(pkg_size))
             if dist_type.dpkg:
-                pkg_size = pkg_size*1024
+                pkg_size *= 1024
+            elif dist_type.pacman:
+                frugalware_cmd="pacman-g2 --version >/dev/null 2>&1"
+                if os.WEXITSTATUS(os.system(frugalware_cmd)) == 127:
+                    #Arch linux has trailing 'K' removed above
+                    pkg_size *= 1024
             pkg_tot += pkg_size
             clist_pkgs.append([pkg_name,human_num(pkg_size,1000).strip(),
                                "%010ld"%pkg_size,"0"])
             clist_pkgs.set_row_data(row, pkg_name)
-            row=row+1
+            row += 1
 
         return (str(row) + _(" packages, ") +
                 _("consuming %sB. ") % human_num(pkg_tot,1000).strip() +
@@ -814,9 +836,9 @@ on your system at present."))
     def findrs(self, clist_rs):
         options=""
         if self.chkWhitespace.get_active():
-            options+="-w "
+            options += "-w "
         if self.chkTabs.get_active():
-            options+="-t%d " % int(self.spinTabs.get_value())
+            options += "-t%d " % int(self.spinTabs.get_value())
         if not options:
             return ("","")
         po, pe = self.get_fslint("./findrs " + options + self.findParams)
@@ -825,7 +847,7 @@ on your system at present."))
             pi = pathInfo(line)
             self.clist_append_path(clist_rs, line,
                                    pi.ls_colour, str(pi.size), pi.ls_date)
-            row=row+1
+            row += 1
 
         return (str(row) + _(" files"), pe)
 
@@ -901,7 +923,7 @@ on your system at present."))
         for line in po:
             pi = pathInfo(line)
             self.clist_append_path(clist_tf, line, '', str(pi.size), pi.ls_date)
-            byteWaste+=pi.du
+            byteWaste += pi.du
             row += 1
 
         return (human_num(byteWaste) + _(" bytes wasted in ") +
@@ -916,7 +938,7 @@ on your system at present."))
             elif option == _("Conflicting files"):
                 pass #default mode
             else:
-                raise "glade GtkOptionMenu item not found"
+                raise RuntimeError("glade GtkOptionMenu item not found")
         else:
             cmd += self.findParams
             option = self.opt_sn_paths.get_children()[0].get()
@@ -929,7 +951,7 @@ on your system at present."))
             elif option == _("Case conflicts"):
                 cmd += " -c"
             else:
-                raise "glade GtkOptionMenu item not found"
+                raise RuntimeError("glade GtkOptionMenu item not found")
 
         po, pe = self.get_fslint(cmd,'\0')
         po = po[1:]
@@ -991,12 +1013,12 @@ on your system at present."))
                     pi = pathInfo(line)
                     size, du = (pi.size, pi.du)
                     dups.append((line, pi.ls_date, pi.mtime))
-                    if not inodes.has_key(pi.inode):
+                    if pi.inode not in inodes:
                         inodes[pi.inode] = True
-                        numdups = numdups + 1
+                        numdups += 1
                 except OSError:
                     #file may have been deleted, changed permissions, ...
-                    self.ShowErrors(str(sys.exc_value)+'\n')
+                    self.ShowErrors(str(sys.exc_info()[1])+'\n')
         else:
             if len(inodes)>1:
                 alldups.append(((numdups-1)*du, numdups, size, dups))
@@ -1060,14 +1082,18 @@ on your system at present."))
 
     def look_busy(self):
         self.find.hide()
+        self.resume.hide()
         self.stop.show()
+        self.pause.show()
         self.stop.grab_focus()
-        self.stop.grab_add() #Just allow app to stop
+        self.control_buttons.grab_add() #restrict mouse and key presses to here
         self.set_cursor(self.LEFT_PTR_WATCH)
 
     def look_interactive(self):
-        self.stop.grab_remove()
+        self.control_buttons.grab_remove()
         self.stop.hide()
+        self.resume.hide()
+        self.pause.hide()
         self.find.show()
         self.find.grab_focus() #as it already would have been in focus
         self.set_cursor(None)
@@ -1113,6 +1139,8 @@ on your system at present."))
 
     def on_fslint_destroy(self, event):
         try:
+            if self.paused:
+                self.fslintproc.resume()
             self.fslintproc.kill()
             del(self.fslintproc)
         except:
@@ -1120,16 +1148,16 @@ on your system at present."))
         gtk.main_quit()
 
     def on_addOkDir_clicked(self, event):
-        self.dlgPathSel.show()
-        if not self.dlgPathSel.canceled:
-            path = self.dlgPathSel.GtkWindow.get_filename()
+        self.dlgPath.show()
+        if not self.dlgPath.canceled:
+            path = self.dlgPath.GtkWindow.get_filename()
             path = os.path.normpath(path)
             self.addDirs(self.ok_dirs, path)
 
     def on_addBadDir_clicked(self, event):
-        self.dlgPathSel.show()
-        if not self.dlgPathSel.canceled:
-            path = self.dlgPathSel.GtkWindow.get_filename()
+        self.dlgPath.show()
+        if not self.dlgPath.canceled:
+            path = self.dlgPath.GtkWindow.get_filename()
             path = os.path.normpath(path)
             #Note find -path doesn't match dirs with trailing /
             #and normpath strips trailing / among other things
@@ -1144,7 +1172,7 @@ on your system at present."))
                         if path and not os.path.exists(path):
                             path = '/'.join(dirs[i:])
                             break
-                if path.find('/') == -1:
+                if '/' not in path:
                     path = "*/" + path #more accurate
             self.addDirs(self.bad_dirs, path)
 
@@ -1217,8 +1245,9 @@ on your system at present."))
     def on_find_clicked(self, event):
 
         try:
-            self.ClearErrors()
+            status=""
             errors=""
+            self.ClearErrors()
             clist = self.clists[self.mode]
             os.chdir(liblocation+"/fslint/")
             errors = self.buildFindParameters()
@@ -1226,7 +1255,6 @@ on your system at present."))
                 self.ShowErrors(errors)
                 return
             self.status.delete_text(0,-1)
-            status=""
             clist.clear()
             #All GtkClist operations seem to be O(n),
             #so doing the following for example will be O((n/2)*(n+1))
@@ -1237,7 +1265,8 @@ on your system at present."))
             if self.mode == self.mode_pkgs:
                 self.pkg_info.get_buffer().set_text("")
             self.look_busy()
-            self.stopflag=0
+            self.stopflag=self.pauseflag=False
+            self.paused = False
             while gtk.events_pending(): gtk.main_iteration(False)#update GUI
             clist.freeze()
             tstart=time.time()
@@ -1258,26 +1287,64 @@ on your system at present."))
         self.look_interactive()
 
     def on_stop_clicked(self, event):
-        self.stopflag=1
+        self.stopflag=True
 
-    def on_stop_keypress(self, button, event):
+    def on_pause_clicked(self, event):
+        # self.fslintproc may not be created yet,
+        # so set the flag and pause in get_fslint()
+        self.pauseflag=True
+
+    def pause_search(self):
+        self.pauseflag=False
+        self.paused = not self.paused
+        if self.paused:
+            self.pause.hide()
+            self.resume.show()
+            self.resume.grab_focus()
+            self.fslintproc.pause()
+            self.status.set_text(_("paused"))
+        else:
+            self.resume.hide()
+            self.pause.show()
+            self.pause.grab_focus()
+            self.fslintproc.resume()
+            #We can only pause external searching
+            self.status.set_text(_("searching")+"...")
+        while gtk.events_pending(): gtk.main_iteration(False)
+
+    def on_control_buttons_keypress(self, button, event):
         #ingore capslock and numlock
         state = event.state & ~(gtk.gdk.LOCK_MASK | gtk.gdk.MOD2_MASK)
         ksyms=gtk.keysyms
         abort_keys={
                     int(gtk.gdk.CONTROL_MASK):[ksyms.c,ksyms.C],
-                    0                   :[ksyms.space,ksyms.Escape,ksyms.Return]
+                    0                        :[ksyms.Escape]
                    }
         try:
             if event.keyval in abort_keys[state]:
                 self.on_stop_clicked(event)
         except:
             pass
-        return True
+        if event.keyval in (ksyms.Tab, ksyms.Left, ksyms.Right):
+            # Unfortunately GTK doesn't restrict widgets
+            # to focus to children of the current grab_add widget.
+            # So we do it manually here.
+            if self.stop.is_focus():
+                if self.paused:
+                    self.resume.grab_focus()
+                else:
+                    self.pause.grab_focus()
+            else:
+                self.stop.grab_focus()
+            return True #Don't allow moving to other controls
+        elif event.keyval in (ksyms.Return, ksyms.space):
+            return False #pass event on to sub button
+        else:
+            return True #Don't pass on up/down arrows etc.
 
     #Note Ctrl-C as well as doing "copy path" which is handled here,
     #also cancels a find in progress. That doesn't need to be handled here
-    #because the stop button grabs focus during the find operation.
+    #because the control buttons grab focus during the find operation.
     #
     #Note also that, we need a global handler here for all lists
     #as in GTK, keyboard events specifically are sent to the window first,
@@ -1308,10 +1375,10 @@ on your system at present."))
         clist = self.clists[self.mode]
         if clist.rows == 0:
             return
-        self.dlgPathSel.show(1)
-        if not self.dlgPathSel.canceled:
+        self.dlgPath.show(fileOps=True)
+        if not self.dlgPath.canceled:
             self.ClearErrors()
-            fileSaveAs = self.dlgPathSel.GtkWindow.get_filename()
+            fileSaveAs = self.dlgPath.GtkWindow.get_filename()
             try:
                 fileSaveAs = open(fileSaveAs, 'w')
             except:
@@ -1338,7 +1405,7 @@ on your system at present."))
                 else:
                     fileSaveAs.writelines(row_data)
 
-    def get_selected_path(self, row=None):
+    def get_selected_path(self, row=None, folder=False):
         clist = self.clists[self.mode]
         if self.mode==self.mode_pkgs:
             return None
@@ -1348,15 +1415,18 @@ on your system at present."))
         row_data=clist.get_data("row_data")
         if row==None:
             row = clist.selection[0] #menu item only enabled if 1 item selected
-        utf8_name=clist.get_text(row,0) #what's being displayed
-        path_name=row_data[row][:-1] #actual full path
+        disp_path=os.path.join(clist.get_text(row,1), clist.get_text(row,0))
+        path=row_data[row][:-1] #actual full path
+        urlencode = (path != disp_path)
 
-        dir,name=os.path.split(path_name)
-        if name != utf8_name:
+        if folder:
+            path=os.path.split(path)[0]
+
+        if urlencode:
             import urllib
-            path_name="file://"+urllib.pathname2url(path_name)
+            path="file://"+urllib.pathname2url(path)
 
-        return path_name
+        return path
 
     def on_copy_activate(self, src):
         path = self.get_selected_path()
@@ -1364,15 +1434,19 @@ on your system at present."))
             clipboard=self.GtkWindow.get_clipboard("CLIPBOARD")
             clipboard.set_text(path, -1)
 
-    def on_open_activate(self, src, row=None):
-        path = self.get_selected_path(row)
+    def on_open_folder_activate(self, src, row=None):
+        self.on_open_activate(src, row, folder=True)
+
+    def on_open_activate(self, src, row=None, folder=False):
+        path = self.get_selected_path(row, folder)
         if path:
             #Note we can't use subProcess() or os.popen3() to read errors,
             #as stdout & stderr of the resulting GUI program will be
-            #connected to it's pipes and so we will hang on read().
+            #connected to its pipes and so we will hang on read().
             #Note also that xdg-open doesn't identify the desktop platform
             #correctly when running (FSlint) on a remote X session.
-            if os.system("xdg-open '%s' >/dev/null 2>&1" % path):
+            path = pipes.quote(path)
+            if os.system("xdg-open %s >/dev/null 2>&1" % path):
                 #could run again with os.popen3() to get actual error
                 #but that's a bit hacky I think?
                 self.ShowErrors(_("Error starting xdg-open") + '\n')
@@ -1417,7 +1491,7 @@ on your system at present."))
                     clist.remove(row)
                     self.clist_remove_handled_groups(clist)
                 except OSError:
-                    self.ShowErrors(str(sys.exc_value)+'\n')
+                    self.ShowErrors(str(sys.exc_info()[1])+'\n')
 
     def on_unselect_using_wildcard_activate(self, event):
         self.select_using_wildcard(False)
@@ -1445,7 +1519,7 @@ on your system at present."))
         else:
             #Convert to unicode to match unicode string below
             wildcard=unicode(wildcard, "utf-8")
-        select_func=select and clist.select_row or clist.unselect_row
+        select_func=(select and clist.select_row or clist.unselect_row)
         if '/' not in wildcard or self.mode == self.mode_pkgs:
             #Convert to unicode so ? in glob matching works correctly
             get_text = lambda row: unicode(clist.get_text(row,0),"utf-8")
@@ -1470,7 +1544,7 @@ on your system at present."))
             import operator
             if which == "first":
                 if clist.get_selectable(row)==False:
-                   return row+1
+                    return row+1
                 else:
                     return row #for first row in clist_sn
             elif which == "newest":
@@ -1480,13 +1554,13 @@ on your system at present."))
                 unselect_mtime=2**32
                 comp=operator.lt
             if clist.get_selectable(row)==False: #not the case for first sn row
-                row=row+1
+                row += 1
             while clist.get_selectable(row) == True and row < clist.rows:
                 mtime = clist.get_row_data(row)
                 if comp(mtime,unselect_mtime):
                     unselect_mtime = mtime
                     unselect_row=row
-                row=row+1
+                row += 1
             return unselect_row
 
         clist = self.clists[self.mode]
@@ -1497,6 +1571,36 @@ on your system at present."))
                 unselect_row = find_row_to_unselect(clist, row, which)
                 clist.unselect_row(unselect_row, 0)
         clist.thaw()
+
+    def find_group_with_all_selected(self, skip_groups=0):
+
+        if self.mode != self.mode_up and self.mode != self.mode_sn:
+            return False
+
+        clist = self.clists[self.mode]
+        selected = clist.selection
+        if not selected:
+            return False
+
+        def group_all_selected(clist, row):
+            if clist.get_selectable(row)==False: #not the case for first sn row
+                row += 1
+            while clist.get_selectable(row) == True and row < clist.rows:
+                if not row in selected:
+                    return False
+                row += 1
+            return True
+
+        group=1
+        for row in range(clist.rows):
+            if row==0 or clist.get_selectable(row)==False: #New group
+                if group_all_selected(clist, row):
+                    if group > skip_groups:
+                        clist.moveto(row,0,0.0,0.0)
+                        return True
+                    group += 1
+
+        return False
 
     def on_unselect_all_activate(self, event):
         clist = self.clists[self.mode]
@@ -1611,6 +1715,16 @@ on your system at present."))
             self.check_user(_("Are you sure you want to delete"))
             if not response:
                 return
+        skip_groups=0
+        while self.confirm_delete_group and \
+              self.find_group_with_all_selected(skip_groups):
+            (response, self.confirm_delete_group) = self.msgbox(
+              _("Are you sure you want to delete all items in this group?"),
+              ('Yes', 'No'), again=True)
+            if response != "Yes":
+                return
+            skip_groups += 1
+
         self.set_cursor(self.WATCH)
         clist = self.clists[self.mode]
         row_data = clist.get_data("row_data")
@@ -1660,8 +1774,19 @@ on your system at present."))
                 cmd="dpkg --purge "
             elif dist_type.pacman:
                 cmd="pacman -R "
-            cmd+=' '.join(pkgs_selected) + " >/dev/null 2>&1"
+            cmd += ' '.join(pkgs_selected) + " >/dev/null 2>&1"
             os.system(cmd)
+
+        # Depth first traversal.
+        # Any exception aborts.
+        # os.walk available since python 2.3, but this is simpler.
+        # We don't follow symlinks. They shouldn't be present in any case.
+        def rm_branch(branch):
+            for name in os.listdir(branch):
+                name = os.path.join(branch, name)
+                if os.path.isdir(name) and not os.path.islink(name):
+                    rm_branch(name)
+            os.rmdir(branch)
 
         clist.freeze()
         for row in paths_to_remove:
@@ -1669,7 +1794,7 @@ on your system at present."))
                 try:
                     path=row_data[row][:-1] #strip trailing '\n'
                     if os.path.isdir(path):
-                        os.rmdir(path)
+                        rm_branch(path)
                     else:
                         os.unlink(path)
                 except:
@@ -1688,7 +1813,7 @@ on your system at present."))
         clist.thaw()
         status = str(numDeleted) + _(" items deleted")
         if self.mode == self.mode_pkgs:
-           status += ". " + human_space_left('/')
+            status += ". " + human_space_left('/')
         self.status.set_text(status)
         self.set_cursor(None)
 
@@ -1703,25 +1828,25 @@ on your system at present."))
 
         paths_to_leave = clist.selection
         if len(paths_to_leave):
-            question+=_("(Ignoring those selected)\n")
+            question += _("(Ignoring those selected)\n")
 
         (response,) = self.msgbox(question, ('Yes', 'No'))
         if response != "Yes":
             return
 
         self.set_cursor(self.WATCH)
-        newGroup = 0
+        newGroup = False
         row_data=clist.get_data("row_data")
         for row in range(clist.rows):
             if row in paths_to_leave:
                 continue
             if clist.get_selectable(row) == False: #new group
-                newGroup = 1
+                newGroup = True
             else:
                 path = row_data[row][:-1] #strip '\n'
                 if newGroup:
                     keepfile = path
-                    newGroup = 0
+                    newGroup = False
                 else:
                     dupfile = path
                     dupdir = os.path.dirname(dupfile)
@@ -1737,7 +1862,7 @@ on your system at present."))
                         os.rename(tmpfile, dupfile)
                         clist.set_background(row, self.bg_colour)
                     except OSError:
-                        self.ShowErrors(str(sys.exc_value)+'\n')
+                        self.ShowErrors(str(sys.exc_info()[1])+'\n')
                     try:
                         #always try this as POSIX has bad requirement that
                         #rename(file1,file2) where both are links to the same
@@ -1789,24 +1914,25 @@ on your system at present."))
         totalSaved = 0
         row_data=clist.get_data("row_data")
         for row in paths_to_clean:
+            path_to_clean = row_data[row][:-1] #strip '\n'
             try:
-                path_to_clean = row_data[row][:-1] #strip '\n'
-                startlen = os.stat(path_to_clean)[stat.ST_SIZE]
+                startlen = os.stat(path_to_clean).st_size
+            except OSError:
+                self.ShowErrors(str(sys.exc_info()[1])+'\n')
+                continue
 
-                cleanProcess = subProcess(command+" '"+path_to_clean+"'")
-                cleanProcess.read()
-                errors = cleanProcess.errdata
-                del(cleanProcess)
-                if len(errors):
-                    raise '', errors[:-1]
-
+            path_param = pipes.quote(path_to_clean)
+            cleanProcess = subProcess(command + " " + path_param)
+            cleanProcess.read()
+            errors = cleanProcess.errdata
+            del(cleanProcess)
+            if len(errors):
+                self.ShowErrors(errors)
+            else:
                 clist.set_background(row, self.bg_colour)
                 clist.unselect_row(row,0)
-                totalSaved += startlen - os.stat(path_to_clean)[stat.ST_SIZE]
+                totalSaved += startlen - os.stat(path_to_clean).st_size
                 numCleaned += 1
-            except:
-                etype, emsg, etb = sys.exc_info()
-                self.ShowErrors(str(emsg)+'\n')
         status =  str(numCleaned) + _(" items cleaned (") + \
                   human_num(totalSaved) + _(" bytes saved)")
         self.status.set_text(status)

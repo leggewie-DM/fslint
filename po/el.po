@@ -1,16 +1,16 @@
-# Italian translation for fslint
-# Copyright (c) 2007 Rosetta Contributors and Canonical Ltd 2007
+# Greek translation for fslint
+# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
 # This file is distributed under the same license as the fslint package.
-# Marcello <mortaromarcello@gmail.com>, 2007.
+# Fotis Tsamis <ftsamis@gmail.com>, 2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fslint\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-07-17 22:22+0100\n"
-"PO-Revision-Date: 2008-09-12 08:45+0000\n"
-"Last-Translator: Simone Oberti <Unknown>\n"
-"Language-Team: Italian <it@li.org>\n"
+"PO-Revision-Date: 2009-06-15 07:47+0000\n"
+"Last-Translator: Fotis Tsamis <Unknown>\n"
+"Language-Team: Greek <el@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -23,215 +23,217 @@ msgstr "FSlint"
 
 #: ../fslint.glade:77
 msgid "Open _Folder"
-msgstr ""
+msgstr "Άνοιγμα _φάκελος"
 
 #: ../fslint.glade:107
 msgid "_Rename..."
-msgstr "_Rinomina..."
+msgstr "_Μετονομασία..."
 
 #: ../fslint.glade:130
 msgid "Select using wildcard"
-msgstr "Seleziona usando wildcard"
+msgstr "Επιλογή με την χρήση wildcard"
 
 #: ../fslint.glade:139
 msgid "Unselect using wildcard"
-msgstr "Deseleziona usando wildcard"
+msgstr "Αποεπιλογή με την χρήση wildcard"
 
 #: ../fslint.glade:148
 msgid "within groups"
-msgstr "con i gruppi"
+msgstr "εντός ομάδων"
 
 #: ../fslint.glade:157
 msgid "Select all but first"
-msgstr "Seleziona tutto tranne il primo"
+msgstr "Επιλογή όλων εκτός του πρώτου"
 
 #: ../fslint.glade:166
 msgid "Select all but newest"
-msgstr "Seleziona tutto tranne il più nuovo"
+msgstr "Επιλογή όλων εκτός του νεότερου"
 
 #: ../fslint.glade:175
 msgid "Select all but oldest"
-msgstr "Seleziona tutto tranne il più vecchio"
+msgstr "Επιλογή όλων εκτός του παλαιότερου"
 
 #: ../fslint.glade:188
 msgid "Toggle selection"
-msgstr "Attiva/disattiva selezione"
+msgstr "Αλλαγή επιλογής"
 
 #: ../fslint.glade:197
 msgid "Unselect all"
-msgstr "Deseleziona tutto"
+msgstr "Αποεπιλογή όλων"
 
 #: ../fslint.glade:314 ../fslint.glade:555
 msgid "Add"
-msgstr "Aggiungi"
+msgstr "Προσθήκη"
 
 #: ../fslint.glade:386 ../fslint.glade:627
 msgid "Remove"
-msgstr "Rimuovi"
+msgstr "Αφαίρεση"
 
 #: ../fslint.glade:429
 msgid "Directories to search"
-msgstr "Cartelle da cercare"
+msgstr "Κατάλογοι για αναζήτηση"
 
 #: ../fslint.glade:454
 msgid "recurse?"
-msgstr "ricorsivo?"
+msgstr "αναδρομικά;"
 
 #: ../fslint.glade:478
 msgid "Search path"
-msgstr "Percorso di ricerca"
+msgstr "Τοποθεσία αναζήτησης"
 
 #: ../fslint.glade:678
 msgid "Paths to exclude"
-msgstr "Percorsi da escludere"
+msgstr "Τοποθεσίες που θα εξαιρεθούν"
 
 #: ../fslint.glade:709
 msgid "Extra find parameters"
-msgstr "Parametri di ricerca aggiuntivi"
+msgstr "Επιπλέον παράμετροι αναζήτησης"
 
 #: ../fslint.glade:730
 msgid "extra find filtering parameters"
-msgstr "Filtri di ricerca aggiuntivi"
+msgstr "επιπλέον παράμετροι φιλτραρίσματος αναζήτησης"
 
 #: ../fslint.glade:763
 msgid "Advanced search parameters"
-msgstr "Parametri di ricerca avanzati"
+msgstr "Παράμετροι αναζήτησης για προχωρημένους"
 
 #: ../fslint.glade:844 ../fslint.glade:959 ../fslint.glade:1206
 #: ../fslint.glade:1495 ../fslint.glade:1687 ../fslint.glade:1921
 #: ../fslint.glade:2026 ../fslint.glade:2170 ../fslint.glade:2287
 #: ../fslint.glade:2608
 msgid "Name"
-msgstr "Nome"
+msgstr "Όνομα"
 
 #: ../fslint.glade:859 ../fslint.glade:1221 ../fslint.glade:1510
 #: ../fslint.glade:1702 ../fslint.glade:1936 ../fslint.glade:2041
 #: ../fslint.glade:2185 ../fslint.glade:2302 ../fslint.glade:2623
 msgid "Directory"
-msgstr "Cartella"
+msgstr "Κατάλογος"
 
 #: ../fslint.glade:874 ../fslint.glade:1732 ../fslint.glade:2101
 #: ../fslint.glade:2200 ../fslint.glade:2332 ../fslint.glade:2653
 msgid "Date"
-msgstr "Data"
+msgstr "Ημερομηνία"
 
 #: ../fslint.glade:905
 msgid "Duplicates"
-msgstr "Duplicati"
+msgstr "Αντίγραφα"
 
 #: ../fslint.glade:974 ../fslint.glade:1525 ../fslint.glade:1717
 #: ../fslint.glade:2086 ../fslint.glade:2317 ../fslint.glade:2638
 msgid "Size"
-msgstr "Dimensione"
+msgstr "Μέγεθος"
 
 #: ../fslint.glade:1076
 msgid "Installed packages"
-msgstr "Pacchetti installati"
+msgstr "Εγκατεστημένα πακέτα"
 
 #: ../fslint.glade:1113
 msgid "Sensitivity="
-msgstr "Sensibilità="
+msgstr "Ευαισθησία="
 
 #: ../fslint.glade:1153
 msgid "invalid UTF8 mode?"
-msgstr "Modo UTF8 non valido?"
+msgstr "μη έγκυρη μέθοδος UTF-8;"
 
 #: ../fslint.glade:1252
 msgid "Bad names"
-msgstr "Nomi errati"
+msgstr "Λανθασμένα ονόματα"
 
 #: ../fslint.glade:1283
 msgid "Search ("
-msgstr "Cerca ("
+msgstr "Αναζήτηση ("
 
 #: ../fslint.glade:1305
 msgid "$PATH"
-msgstr "$PATH"
+msgstr "σε $PATH"
 
 #: ../fslint.glade:1324
 msgid ") for"
-msgstr ") di"
+msgstr ") για"
 
 #: ../fslint.glade:1367 ../fslint-gui:938
 msgid "Conflicting files"
-msgstr "Files in conflitto"
+msgstr "Συγκρουόμενα αρχεία"
 
 #: ../fslint.glade:1375 ../fslint.glade:1438 ../fslint-gui:936
 #: ../fslint-gui:945
 msgid "Aliases"
-msgstr "Pseudonimi"
+msgstr "Ψευδώνυμα"
 
 #: ../fslint.glade:1414 ../fslint-gui:951
 msgid "Case conflicts"
-msgstr "Conflitto maiuscolo/minuscolo"
+msgstr "Αντίφαση πεζών/κεφαλαίων"
 
 #: ../fslint.glade:1422 ../fslint-gui:947
 msgid "Same names"
-msgstr "Stessi nomi"
+msgstr "Ίδια ονόματα"
 
 #: ../fslint.glade:1430 ../fslint-gui:949
 msgid "Same names(ignore case)"
-msgstr "Stessi nomi(ignoro le maiuscole)"
+msgstr "Ίδια ονόματα(αγνοώντας πεζά/κεφαλαία)"
 
 #: ../fslint.glade:1556
 msgid "Name clashes"
-msgstr "Nomi coincidenti"
+msgstr "Συγκρουόμενα ονόματα"
 
 #: ../fslint.glade:1587
 msgid "More restrictive search for core files"
-msgstr "Ricerca più restrittiva per i file core"
+msgstr ""
 
 #: ../fslint.glade:1589
 msgid "core file mode?"
-msgstr "Cerco file core?"
+msgstr ""
 
 #: ../fslint.glade:1613
 msgid "days"
-msgstr "giorni"
+msgstr "ημέρες"
 
 #: ../fslint.glade:1633
 msgid "minimum age"
-msgstr "età minima"
+msgstr "ελάχιστη ηλικία"
 
 #: ../fslint.glade:1763
 msgid "Temp files"
-msgstr "File temporanei"
+msgstr "Προσωρινά αρχεία"
 
 #: ../fslint.glade:1795
 msgid "Dangling"
-msgstr "Pendente"
+msgstr ""
 
 #: ../fslint.glade:1813
 msgid "Absolute links to paths within or below the link's directory"
-msgstr "Link assoluti a path dentro o al di sotto della directory link"
+msgstr ""
+"Απόλυτοι σύνδεσμοι προς τις διαδρομές εντός ή εκτός του καταλόγου του "
+"συνδέσμου"
 
 #: ../fslint.glade:1815
 msgid "Suspect"
-msgstr "Sospetto"
+msgstr "Ύποπτο"
 
 #: ../fslint.glade:1835
 msgid "Relative"
-msgstr "Relativo"
+msgstr "Σχετικό"
 
 #: ../fslint.glade:1855
 msgid "Absolute"
-msgstr "Assoluto"
+msgstr "Απόλυτος"
 
 #: ../fslint.glade:1874
 msgid "/././. ///// /../ etc."
-msgstr "/././. ///// /../ ecc."
+msgstr "/././. ///// /../ κτλ."
 
 #: ../fslint.glade:1876
 msgid "Redundant naming"
-msgstr "Nome superfluo"
+msgstr "Πλεονάζουσα ονομασία"
 
 #: ../fslint.glade:1951
 msgid "Target"
-msgstr "Target"
+msgstr "Προορισμός"
 
 #: ../fslint.glade:1982
 msgid "Bad symlinks"
-msgstr "Link simbolici sbagliati"
+msgstr "Λανθασμένοι symlinks"
 
 #: ../fslint.glade:2056
 msgid "UID"
@@ -243,39 +245,39 @@ msgstr "GID"
 
 #: ../fslint.glade:2132
 msgid "Bad IDs"
-msgstr "ID non corretti"
+msgstr "Λανθασμένα IDs"
 
 #: ../fslint.glade:2224
 msgid "Empty directories"
-msgstr "Directory vuote"
+msgstr "Κενοί κατάλογοι"
 
 #: ../fslint.glade:2250
 msgid "Search $PATH"
-msgstr "Ricerca $PATH"
+msgstr "Αναζήτηση σε $PATH"
 
 #: ../fslint.glade:2363
 msgid "Non stripped binaries"
-msgstr "Binari contenenti debug"
+msgstr ""
 
 #: ../fslint.glade:2445
 msgid "bad indenting for indent width"
-msgstr "indentazione non corretta per larghezza"
+msgstr ""
 
 #: ../fslint.glade:2549
 msgid "whitespace at end of line"
-msgstr "spazio alla fine della riga"
+msgstr "κενό στο τέλος της γραμμής"
 
 #: ../fslint.glade:2684
 msgid "Redundant whitespace"
-msgstr "Spazi superflui"
+msgstr "Περιττά κενά"
 
 #: ../fslint.glade:2767
 msgid "Find"
-msgstr "Ricerca"
+msgstr "Εύρεση"
 
 #: ../fslint.glade:2842
 msgid "Stop"
-msgstr "Arresta"
+msgstr "Διακοπή"
 
 #: ../fslint.glade:2917
 msgid "Pause"
@@ -287,101 +289,100 @@ msgstr ""
 
 #: ../fslint.glade:3081
 msgid "Select"
-msgstr "Seleziona"
+msgstr "Επιλογή"
 
 #: ../fslint.glade:3108
 msgid "Save (selected) list to file"
-msgstr "Salva la lista (selezione) su file"
+msgstr "Αποθήκευση (επιλεγμένης) λίστας σε αρχείο"
 
 #: ../fslint.glade:3153
 msgid "Save"
-msgstr "Salva"
+msgstr "Αποθήκευση"
 
 #: ../fslint.glade:3180 ../fslint.glade:3324
 msgid "selected"
-msgstr "selezionato"
+msgstr "επιλεγμένων"
 
 #: ../fslint.glade:3225
 msgid "Delete"
-msgstr "Elimina"
+msgstr "Διαγραφή"
 
 #: ../fslint.glade:3252
 msgid ""
 "All (except selected) using hardlinks\n"
 "(or symlinks if on a different filesystem)"
 msgstr ""
-"Tutti (eccetto quelli selezionati) usando hardlink\n"
-"(o link simbolici se sono su filesystem diversi)"
 
 #: ../fslint.glade:3298
 msgid "Merge"
-msgstr "Unisci"
+msgstr "Συγχώνευση"
 
 #: ../fslint.glade:3369
 msgid "Clean"
-msgstr "Pulisci"
+msgstr "Καθαρισμός"
 
 #: ../fslint.glade:3502
 msgid "Select Path"
-msgstr "Seleziona percorso"
+msgstr "Επιλογή τοποθεσίας"
 
 #: ../fslint.glade:3674
 msgid "ask me this in future?"
-msgstr "Visualizzare questo messaggio in futuro?"
+msgstr "Να γίνει ερώτηση στο μέλλον;"
 
 #: ../fslint-gui:156
 #, python-format
 msgid "Usage: %s [OPTION] [PATHS]"
-msgstr "Uso: %s [OPZIONI] [PERCORSI]"
+msgstr "Χρήση: %s [ΕΠΙΛΟΓΗ] [ΤΟΠΟΘΕΣΙΕΣ]"
 
 #: ../fslint-gui:157
 msgid "display version"
-msgstr "mostra versione"
+msgstr "εμφάνιση έκδοσης"
 
 #: ../fslint-gui:158
 msgid "display help"
-msgstr "mostra l'aiuto"
+msgstr "εμφάνιση βοήθειας"
 
 #: ../fslint-gui:397
 #, python-format
 msgid "%(percent)s of %(disk)s is used leaving %(size)sB available"
-msgstr "%(percent)s di %(disk)s in uso lasciando %(size)sB disponibili"
+msgstr ""
+"το %(percent)s του %(disk)s χρησιμοποιείται αφήνοντας %(size)sB διαθέσιμα"
 
 #: ../fslint-gui:523
 msgid "Do you want to overwrite?\n"
-msgstr "Vuoi sovrascrivere?\n"
+msgstr "Θέλετε να γίνει αντικατάσταση;\n"
 
 #: ../fslint-gui:529
 msgid "You can't overwrite "
-msgstr "Non puoi sovrascrivere "
+msgstr "Δεν μπορείτε να αντικαταστήσετε. "
 
 #: ../fslint-gui:565
 msgid "Files with the same content"
-msgstr "File con lo stesso contenuto"
+msgstr "Αρχεία με το ίδιο περιεχόμενο"
 
 #: ../fslint-gui:566
 msgid "Installed packages ordered by disk usage"
-msgstr "Pacchetti installati ordinati per dimensione"
+msgstr "Εγκατεστημένα αρχεία με σειρά χρήσης δίσκου"
 
 #: ../fslint-gui:567
 msgid "Problematic filenames"
-msgstr "Nomi di file problematici"
+msgstr "Προβληματικά ονόματα αρχείων"
 
 #: ../fslint-gui:568
 msgid "Possibly conflicting commands or filenames"
-msgstr "Possibili conflitti nei comandi o nei file"
+msgstr "Πιθανά συγκρουόμενες εντολές ή ονόματα αρχείων"
 
 #: ../fslint-gui:569
 msgid "Possibly old temporary files"
-msgstr "Possibili vecchi file temporanei"
+msgstr "Πιθανά παλιά προσωρινά αρχεία"
 
 #: ../fslint-gui:570
 msgid "Problematic symbolic links"
-msgstr "Link simbolici problematici"
+msgstr "Προβληματικοί συμβολικοί σύνδεσμοι"
 
 #: ../fslint-gui:571
 msgid "Files with missing user IDs"
-msgstr "File con user ID mancante"
+msgstr "Αρχεία χωρίς ID χρήστη"
 
 #: ../fslint-gui:572
 msgid "Directory branches with no files"
@@ -389,97 +390,97 @@ msgstr ""
 
 #: ../fslint-gui:573
 msgid "Executables still containing debugging info"
-msgstr "Eseguibili che contengono ancora informazioni di debug"
+msgstr "Εκτελέσιμα που περιέχουν ακόμη πληροφορίες αποσφαλμάτωσης"
 
 #: ../fslint-gui:574
 msgid "Erroneous whitespace in a text file"
-msgstr "Spazi non necessari in un file di testo"
+msgstr "Λανθασμένα κενά σε ένα αρχείο κειμένου"
 
 #: ../fslint-gui:580
 msgid "Invalid path ["
-msgstr "Percorso invalido ["
+msgstr "Λανθασμένη τοποθεσία ["
 
 #: ../fslint-gui:621 ../fslint-gui:1312
 msgid "searching"
-msgstr "sto cercando"
+msgstr "γίνεται αναζήτηση"
 
 #: ../fslint-gui:638
 msgid "processing..."
-msgstr "sto processando..."
+msgstr "Γίνεται επεξεργασία..."
 
 #: ../fslint-gui:666
 msgid "No search paths specified"
-msgstr "Nessun percorso di ricerca specificato"
+msgstr "Δεν ορίστηκαν τοποθεσίες για αναζήτηση"
 
 #: ../fslint-gui:810
 msgid ""
 "Sorry, FSlint does not support this functionality on your system at present."
 msgstr ""
-"Spiacente, al momento FSlint non supporta questa funzionalità sul tuo "
-"sistema."
+"Συγνώμη, Το FSlint δεν υποστηρίζει αυτή τη λειτουργία στο σύστημα σας προς "
+"το παρόν."
 
 #: ../fslint-gui:831
 msgid " packages, "
-msgstr " pacchetti, "
+msgstr " πακέτα, "
 
 #: ../fslint-gui:832
 #, python-format
 msgid "consuming %sB. "
-msgstr "occupanti %sB. "
+msgstr "που καταναλώνουν %sB. "
 
 #: ../fslint-gui:833
 #, python-format
 msgid "Note %s."
-msgstr "Nota %s."
+msgstr "Σημειώστε πως %s."
 
 #: ../fslint-gui:852 ../fslint-gui:892 ../fslint-gui:930 ../fslint-gui:992
 msgid " files"
-msgstr " file"
+msgstr " αρχεία"
 
 #: ../fslint-gui:872
 msgid " unstripped binaries"
-msgstr " binari contenenti debug"
+msgstr ""
 
 #: ../fslint-gui:881
 msgid " empty directories"
-msgstr " directory vuote"
+msgstr " κενοί κατάλογοι"
 
 #: ../fslint-gui:913
 msgid " links"
-msgstr " link"
+msgstr " σύνδεσμοι"
 
 #: ../fslint-gui:929 ../fslint-gui:1045
 msgid " bytes wasted in "
-msgstr " byte sprecati in "
+msgstr " bytes πάνε χαμένα σε "
 
 #: ../fslint-gui:975 ../fslint-gui:1046
 msgid " files (in "
-msgstr " file (in "
+msgstr " αρχεία (σε "
 
 #: ../fslint-gui:976 ../fslint-gui:1047
 msgid " groups)"
-msgstr " gruppi)"
+msgstr " ομάδες)"
 
 #: ../fslint-gui:1037
 msgid "bytes wasted"
-msgstr "byte sprecati"
+msgstr "bytes πάνε χαμένα"
 
 #: ../fslint-gui:1124
 msgid "None selected"
-msgstr "Nessuna selezione"
+msgstr "Δεν επιλέχθηκε τίποτα"
 
 #: ../fslint-gui:1128
 msgid " this item?\n"
-msgstr " questo elemento?\n"
+msgstr " αυτό το αντικείμενο;\n"
 
 #: ../fslint-gui:1130
 #, python-format
 msgid " these %d items?\n"
-msgstr " questi %d elementi?\n"
+msgstr " αυτά τα %d αντικείμενα;\n"
 
 #: ../fslint-gui:1278
 msgid "User aborted"
-msgstr "Interruzione dell'utente"
+msgstr "Ακυρώθηκε από τον χρήστη"
 
 #: ../fslint-gui:1305
 msgid "paused"
@@ -487,34 +488,35 @@ msgstr ""
 
 #: ../fslint-gui:1452
 msgid "Error starting xdg-open"
-msgstr ""
+msgstr "Σφάλμα κατά την εκκίνηση του xdg-open"
 
 #: ../fslint-gui:1464
 msgid "Rename:"
-msgstr "Rinomina:"
+msgstr "Μετονομασία:"
 
 #: ../fslint-gui:1475 ../fslint-gui:1516
 #, python-format
 msgid "Error: [%s] can not be represented on your file system"
-msgstr "Errore: [%s] non può essere rappresentato sul tuo filesystem"
+msgstr "Σφάλμα: το [%s] δε μπορεί να αναπαρασταθεί στο σύστημα αρχείων σας"
 
 #: ../fslint-gui:1485
 #, python-format
 msgid "Error: Can't rename [%(old_path)s] as [%(new_path)s] exists"
 msgstr ""
-"Error: Non posso rinominare [%(old_path)s] perchè [%(new_path)s] esiste"
+"Σφάλμα: Αδύνατη η μετονομασία του [%(old_path)s] καθώς το [%(new_path)s] "
+"υπάρχει ήδη"
 
 #: ../fslint-gui:1505
 msgid "wildcard:"
-msgstr "wildcard:"
+msgstr "χαρακτήρας αναπλήρωσης:"
 
 #: ../fslint-gui:1710
 msgid "Sorry, you must be root to delete system packages."
-msgstr "Spiacente, devi essere root per eliminare pacchetti di sistema."
+msgstr "Συγνώμη, θα πρέπει να είστε root για να διαγράψετε πακέτα συστήματος."
 
 #: ../fslint-gui:1715
 msgid "Are you sure you want to delete"
-msgstr "Sei sicuro di voler cancellare"
+msgstr "Θέλετε σίγουρα να διαγράψετε"
 
 #: ../fslint-gui:1722
 msgid "Are you sure you want to delete all items in this group?"
@@ -522,53 +524,53 @@ msgstr ""
 
 #: ../fslint-gui:1742
 msgid "Calculating dependencies..."
-msgstr "Sto calcolando le dipendenze..."
+msgstr "Γίνεται υπολογισμός εξαρτήσεων..."
 
 #: ../fslint-gui:1760
 #, python-format
 msgid "%d extra packages need to be deleted.\n"
-msgstr "%d pacchetti aggiuntivi necessitano di esser cancellati.\n"
+msgstr "%d επιπλέον πακέτα χρειάζεται να διαγραφούν.\n"
 
 #: ../fslint-gui:1761
 msgid "Please review the updated selection."
-msgstr "Per favore controlla la selezione aggiornata."
+msgstr "Παρακαλώ ελέγξτε την ενημερωμένη επιλογή."
 
 #: ../fslint-gui:1769
 msgid "Removing packages..."
-msgstr "Sto rimuovendo i pacchetti..."
+msgstr "Γίνεται αφαίρεση πακέτων..."
 
 #: ../fslint-gui:1814
 msgid " items deleted"
-msgstr " elementi cancellati"
+msgstr " αντικείμενα διαγράφηκαν"
 
 #: ../fslint-gui:1827
 msgid "Are you sure you want to merge ALL files?\n"
-msgstr "Sei sicuro di voler unire TUTTI i file?\n"
+msgstr "Θέλετε σίγουρα να γίνει συγχώνευση ΟΛΩΝ των αρχείων;\n"
 
 #: ../fslint-gui:1831
 msgid "(Ignoring those selected)\n"
-msgstr "(Tranne quelli selezionati)\n"
+msgstr "(Αγνόηση των επιλεγμένων)\n"
 
 #: ../fslint-gui:1879
 msgid "Which indenting method do you want to convert to?"
-msgstr "Con quale metodo di indentazione vuoi convertire?"
+msgstr ""
 
 #: ../fslint-gui:1880
 msgid "Tabs"
-msgstr "Tab"
+msgstr ""
 
 #: ../fslint-gui:1880
 msgid "Spaces"
-msgstr "Spazi"
+msgstr "Κενά"
 
 #: ../fslint-gui:1891
 msgid "Are you sure you want to clean"
-msgstr "Sei sicuro di voler pulire"
+msgstr "Θέλετε σίγουρα να καθαρίσετε"
 
 #: ../fslint-gui:1936
 msgid " items cleaned ("
-msgstr " elemento pulito ("
+msgstr " αντικείμενα καθαρίστηκαν ("
 
 #: ../fslint-gui:1937
 msgid " bytes saved)"
-msgstr " byte salvati)"
+msgstr " bytes ελευθερώθηκαν)"
