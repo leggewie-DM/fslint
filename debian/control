@@ -1,7 +1,7 @@
 Source: fslint
 Section: admin
 Priority: optional
-Maintainer: Pádraig Brady <P@draigbrady.com>
+Maintainer: Pádraig Brady <P@draigBrady.com>
 Homepage: http://www.pixelbeat.org/fslint/
 Build-Depends: debhelper (>= 5)
 Build-Depends-Indep: gettext (>= 0.13)

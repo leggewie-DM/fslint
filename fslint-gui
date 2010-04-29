@@ -79,7 +79,7 @@ class i18n:
 
     def _init_preferred_encoding(self):
         #Note that this encoding name is canonlicalised already
-        self.preferred_encoding=locale.getpreferredencoding()
+        self.preferred_encoding=locale.getpreferredencoding(do_setlocale=False)
         #filename encoding can be different from default encoding
         filename_encoding = os.environ.get("G_FILENAME_ENCODING")
         if filename_encoding:
@@ -168,7 +168,7 @@ try:
         sys.exit(None)
 
     if ("--version","") in lOpts:
-        puts("FSlint 2.40")
+        puts("FSlint 2.42")
         sys.exit(None)
 except getopt.error, msg:
     puts(msg)
@@ -504,16 +504,22 @@ class dlgPath(GladeWrapper):
             if self.fileOps:
                 self.pwd = self.GtkWindow.get_current_folder()
             else:
-                self.pwd = self.GtkWindow.get_filename()
+                user_path = self.GtkWindow.get_filename()
+                if os.path.exists(user_path):
+                    self.pwd = user_path
         if self.GtkWindow.modal:
             gtk.main_quit()
         return True #Don't let window be destroyed
 
     def on_ok_clicked(self, *args):
+        file = self.GtkWindow.get_filename()
+        if not file:
+            # This can happen for the fileOps case, or otherwise
+            # if one clicks on the "recently used" group and
+            # then clicks Ok without selecting anything.
+            return True #Don't let window be destroyed
+
         if self.fileOps: #creating new item
-            file = self.GtkWindow.get_filename()
-            if not file:
-                return True #Don't let window be destroyed
             if os.path.isdir(file):
                 self.GtkWindow.set_current_folder(file)
                 return True #Don't let window be destroyed
@@ -767,7 +773,8 @@ class fslint(GladeWrapper):
             self.checked_pkgs[package]=''
         if dist_type.rpm:
             cmd  = r"rpm -e --test " + ' '.join(packages) + r" 2>&1 | "
-            cmd += r"sed -n 's/.*is needed by (installed) \(.*\)/\1/p' | "
+            cmd += r"sed -n 's/-[0-9]\{1,\}:/-/; " #strip epoch
+            cmd += r"        s/.*is needed by (installed) \(.*\)/\1/p' | "
             cmd += r"LANG=C sort | uniq"
         elif dist_type.dpkg:
             cmd  = r"dpkg --purge --dry-run " + ' '.join(packages) + r" 2>&1 | "
@@ -886,7 +893,7 @@ on your system at present."))
         for record in po:
             pi = pathInfo(record)
             self.clist_append_path(clist_id, record, pi.ls_colour, str(pi.uid),
-                                   str(pi.gid), str(pi.size), ps.ls_date)
+                                   str(pi.gid), str(pi.size), pi.ls_date)
             row += 1
 
         return (str(row) + _(" files"), pe)

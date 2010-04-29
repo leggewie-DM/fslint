@@ -1,3 +1,24 @@
+2.42 29/04/10
+	* Translations:
+		* Added: Catalan, Galician.
+		* Updated: Chinese,Czech,Danish,Dutch,Finnish,French,German,
+		  Greek,Hebrew,Hungarian,Italian,Malay,Russian,Spanish,Swedish.
+	* Fixes:
+		* Allow the findup script to run on CYGWIN by handling the
+		  different output format of md5sum et. al. on that platform.
+		* The "Bad IDs" function in the GUI would error out if it found
+		  any items.  This regression was introduced in 2.26.
+		* Start the GUI even if the user's locale is not supported
+		  by the system. This regression was introduced in 2.40.
+		* Don't warn about missing paths when adding wildcard paths
+		  to the exclude list. This regression was introduced in 2.40.
+		* Don't throw an exception when one OKs an empty selection
+		  when adding dirs. This regression was introduced in 2.40.
+		* finded now produces correct results when passed parameters
+		  with a trailing /. This regression was introduced in 2.40.
+		* finded now produces correct results when passed empty branches
+		  as parameters. This regression was introduced in 2.40.
+
 2.40 21/07/09
 	* Translations:
 		* Added: Greek,Finnish,Hungarian.
