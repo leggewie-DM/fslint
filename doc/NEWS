@@ -1,3 +1,26 @@
+2.40 21/07/09
+	* Translations:
+		* Added: Greek,Finnish,Hungarian.
+		* Updated: Chinese,Danish,Dutch,German,Hebrew,Italian,Swedish.
+	* Fixes:
+		* Patch from Marcus Habermehl to support Arch linux
+		  as well as Frugalware in the "Installed Packages" function.
+		* Handle single quotes in specified paths.
+		* Support building Mandriva RPMs again from the tarball.
+		* The redundant whitespace function now doesn't display
+		  errors when processing files with ':' in the path name.
+	* Improvements:
+		* Add a context menu item to "Open Folder" that contains
+		  the selected file. Suggestion from Scott Kostyshak.
+		* Ask for confirmation, if all copies of a duplicate
+		  are selected for deletion. Suggestion from Endolith.
+		* Add Pause/Resume buttons to control long searches.
+		  Suggestion from Scott Kostyshak.
+		* In the "empty directories" tab, report empty branches rather
+		  than just empty leaf directories. Suggestion from Endolith.
+		* Use GtkFileChooser rather than deprecated GtkFileSelection.
+		  Note we now require GTK+ >= 2.4 and python >= 2.3.
+
 2.28 09/09/08
 	* Translations:
 		* Updated: Turkish, French, German, Spanish, Malay,
@@ -392,8 +415,8 @@
 	  all tools had to have the global parameters (-r & -f at present)
 	  specified before any others, and there were various issues when
 	  no parameters were passed. This should all be fixed now.
-	* Removed the bash dependency (declare) from getfpf. Marc A.
-	  Lehmann reported this.
+	* Removed the bash dependency (declare) from getfpf.
+	  Marc A. Lehmann reported this.
 	* Got rid of spurious 0 output by findrs when it had no files to report.
 	* The usual extra comments and code cleanups.
 

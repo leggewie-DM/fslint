@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # findbl - find bad symbolic links (dangling, malformed etc.)
-# Copyright © 2000-2008 by Pádraig Brady <P@draigBrady.com>.
+# Copyright © 2000-2009 by Pádraig Brady <P@draigBrady.com>.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -106,7 +106,7 @@ search_expr="$search_expr|(${ASC_01}.+/$)" ;; #finds ending with /
 	-v|--version)
 		Version ;;
 	*)
-		argsToPassOn="$argsToPassOn '$arg'" ;;
+		argsToPassOn="$argsToPassOn $(shell_quote "$arg")" ;;
 	esac
 done
 

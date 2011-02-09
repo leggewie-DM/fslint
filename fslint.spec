@@ -2,7 +2,7 @@
 %define suse %([ -f /etc/SuSE-release ] && echo 1 || echo 0)
 
 Name:           fslint
-Version:        2.28
+Version:        2.40
 %if %{mandriva}
 Release:        1.mdv
 %endif
@@ -12,7 +12,7 @@ Release:        1.suse
 %if !%{mandriva} && !%{suse}
 Release:        1
 %endif
-Summary:        FSlint - a utility to find and clean "lint" on a filesystem
+Summary:        File System "lint" discovery and cleaning utility
 
 Group:          Applications/File
 License:        GPL
@@ -23,15 +23,15 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 BuildRequires:  gettext >= 0.13, desktop-file-utils
 
-Requires:       python >= 2.0, cpio
+Requires:       python >= 2.3, cpio, findutils
 %if %{mandriva}
-Requires:       pygtk2.0, pygtk2.0-libglade
+Requires:       pygtk2.0 >= 2.4, pygtk2.0-libglade
 %endif
 %if %{suse}
-Requires:       python-gtk >= 2.0
+Requires:       python-gtk >= 2.4
 %endif
 %if !%{mandriva} && !%{suse}
-Requires:       pygtk2, pygtk2-libglade
+Requires:       pygtk2 >= 2.4, pygtk2-libglade
 %endif
 
 %description
@@ -102,6 +102,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Jul 21 2009 Pádraig Brady
+- Update GTK+ and Python deps to 2.4 and 2.3 respectively
+
 * Fri Mar 09 2007 Pádraig Brady
 - Put more info in description so the package is
   easier to find in repositories
