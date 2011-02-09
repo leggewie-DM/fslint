@@ -2,10 +2,10 @@
 
 # This is a support script for the findup utility which:
 
-# Filters out unique file sizes.
+# Filters unique file sizes.
 # Note this can be done also with `uniq -3 -D` in findup.
 
-# Also filters out groups of files with the same size
+# Also filters groups of files with the same size
 # that _all_ have the same inode (hardlinks).
 # This optimization is the reason for this seperate script.
 # Previously we merged hardlinks to only one, but

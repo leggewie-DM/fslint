@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fslint 2.14\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-02-15 19:36+0000\n"
+"POT-Creation-Date: 2007-06-27 14:29+0100\n"
 "PO-Revision-Date: 2006-01-16 08:25+0000\n"
 "Last-Translator: Seann Liu <Seann.Liu@gmail.com>\n"
 "Language-Team: Seann Liu <Seann.Liu@gmail.com>\n"
@@ -14,416 +14,529 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: fslint.c:7
+#: ../fslint.glade:8
 msgid "FSlint"
 msgstr "FSlint"
 
-#: fslint.c:8 fslint.c:13
+#: ../fslint.glade:78
+msgid "_Rename..."
+msgstr "重命名(_R)"
+
+#: ../fslint.glade:101
+msgid "Select using wildcard"
+msgstr ""
+
+#: ../fslint.glade:110
+msgid "Unselect using wildcard"
+msgstr ""
+
+#: ../fslint.glade:119
+msgid "within groups"
+msgstr "组中"
+
+#: ../fslint.glade:128
+msgid "Select all but first"
+msgstr ""
+
+#: ../fslint.glade:137
+msgid "Select all but newest"
+msgstr ""
+
+#: ../fslint.glade:146
+msgid "Select all but oldest"
+msgstr ""
+
+#: ../fslint.glade:159
+#, fuzzy
+msgid "Toggle selection"
+msgstr "选择"
+
+#: ../fslint.glade:168
+#, fuzzy
+msgid "Unselect all"
+msgstr "选择路径"
+
+#: ../fslint.glade:285 ../fslint.glade:538
 msgid "Add"
 msgstr "相加"
 
-#: fslint.c:9 fslint.c:14
+#: ../fslint.glade:361 ../fslint.glade:614
 msgid "Remove"
 msgstr "移除"
 
-#: fslint.c:10
+#: ../fslint.glade:408
 msgid "Directories to search"
 msgstr "文件夹搜索"
 
-#: fslint.c:11
+#: ../fslint.glade:433
 msgid "recurse?"
 msgstr "重复？"
 
-#: fslint.c:12
+#: ../fslint.glade:457
 msgid "Search path"
 msgstr "搜寻路径"
 
-#: fslint.c:15
+#: ../fslint.glade:669
 msgid "Paths to exclude"
 msgstr "路径排除"
 
-#: fslint.c:16
+#: ../fslint.glade:704
 msgid "Extra find parameters"
 msgstr "额外寻找参数"
 
-#: fslint.c:17
+#: ../fslint.glade:729
 msgid "extra find filtering parameters"
 msgstr "额外寻找过滤参数"
 
-#: fslint.c:18 fslint.c:100
-msgid "*"
-msgstr "*"
-
-#: fslint.c:19
+#: ../fslint.glade:762
 msgid "Advanced search parameters"
 msgstr "高级搜寻参数"
 
-#: fslint.c:20 fslint.c:24 fslint.c:30 fslint.c:42 fslint.c:50 fslint.c:62
-#: fslint.c:66 fslint.c:73 fslint.c:78 fslint.c:83
+#: ../fslint.glade:847 ../fslint.glade:978 ../fslint.glade:1230
+#: ../fslint.glade:1539 ../fslint.glade:1751 ../fslint.glade:2005
+#: ../fslint.glade:2126 ../fslint.glade:2298 ../fslint.glade:2431
+#: ../fslint.glade:2654
 msgid "Name"
 msgstr "名称"
 
-#: fslint.c:21 fslint.c:31 fslint.c:43 fslint.c:51 fslint.c:63 fslint.c:67
-#: fslint.c:74 fslint.c:79 fslint.c:84
+#: ../fslint.glade:866 ../fslint.glade:1249 ../fslint.glade:1558
+#: ../fslint.glade:1770 ../fslint.glade:2024 ../fslint.glade:2145
+#: ../fslint.glade:2317 ../fslint.glade:2450 ../fslint.glade:2673
 msgid "Directory"
 msgstr "文件夹"
 
-#: fslint.c:22 fslint.c:53 fslint.c:71 fslint.c:75 fslint.c:81 fslint.c:86
+#: ../fslint.glade:885 ../fslint.glade:1808 ../fslint.glade:2221
+#: ../fslint.glade:2336 ../fslint.glade:2488 ../fslint.glade:2711
 msgid "Date"
 msgstr "日期"
 
-#: fslint.c:23
+#: ../fslint.glade:920
 msgid "Duplicates"
 msgstr "重复"
 
-#: fslint.c:25 fslint.c:44 fslint.c:52 fslint.c:70 fslint.c:80 fslint.c:85
+#: ../fslint.glade:997 ../fslint.glade:1577 ../fslint.glade:1789
+#: ../fslint.glade:2202 ../fslint.glade:2469 ../fslint.glade:2692
 msgid "Size"
 msgstr "大小"
 
-#: fslint.c:26
-msgid "Size_for_Sort"
-msgstr ""
-
-#: fslint.c:27
+#: ../fslint.glade:1092
 msgid "Installed packages"
 msgstr "已安装的包"
 
-#: fslint.c:28
+#: ../fslint.glade:1133
 msgid "Sensitivity="
 msgstr "敏感性＝"
 
-#: fslint.c:29
+#: ../fslint.glade:1177
 msgid "invalid UTF8 mode?"
 msgstr "非法的UTF8模式"
 
-#: fslint.c:32
+#: ../fslint.glade:1284
 msgid "Bad names"
 msgstr "坏的名称"
 
-#: fslint.c:33
+#: ../fslint.glade:1319
 msgid "Search ("
 msgstr "搜寻 （"
 
-#: fslint.c:34
+#: ../fslint.glade:1345
 msgid "$PATH"
 msgstr "$路径"
 
-#: fslint.c:35
+#: ../fslint.glade:1364
 msgid ") for"
 msgstr "）为了...目的"
 
-#: fslint.c:36 ../fslint-gui:756
+#: ../fslint.glade:1411 ../fslint-gui:869
 msgid "Conflicting files"
 msgstr "相抵触的文件"
 
-#: fslint.c:37 fslint.c:41 ../fslint-gui:754 ../fslint-gui:763
+#: ../fslint.glade:1419 ../fslint.glade:1482 ../fslint-gui:867
+#: ../fslint-gui:876
 msgid "Aliases"
 msgstr "化名"
 
-#: fslint.c:38 ../fslint-gui:769
+#: ../fslint.glade:1458 ../fslint-gui:882
 msgid "Case conflicts"
 msgstr "个案冲突"
 
-#: fslint.c:39 ../fslint-gui:765
+#: ../fslint.glade:1466 ../fslint-gui:878
 msgid "Same names"
 msgstr "相同的名称"
 
-#: fslint.c:40 ../fslint-gui:767
+#: ../fslint.glade:1474 ../fslint-gui:880
 msgid "Same names(ignore case)"
 msgstr "相同的名称（忽略个案）"
 
-#: fslint.c:45
+#: ../fslint.glade:1612
 msgid "Name clashes"
 msgstr "名称冲突"
 
-#: fslint.c:46
+#: ../fslint.glade:1647
 msgid "More restrictive search for core files"
 msgstr "进一步限定搜索核心文件"
 
-#: fslint.c:47
+#: ../fslint.glade:1649
 msgid "core file mode?"
 msgstr "核心文件模式？"
 
-#: fslint.c:48
+#: ../fslint.glade:1673
 msgid "days"
 msgstr "天数"
 
-#: fslint.c:49
+#: ../fslint.glade:1693
 msgid "minimum age"
 msgstr "最小年龄"
 
-#: fslint.c:54
+#: ../fslint.glade:1843
 msgid "Temp files"
 msgstr "临时文件"
 
-#: fslint.c:55
+#: ../fslint.glade:1879
 msgid "Dangling"
 msgstr "悬挂"
 
-#: fslint.c:56
+#: ../fslint.glade:1897
 msgid "Absolute links to paths within or below the link's directory"
 msgstr "完全链接到链接的文件夹内或下的路径"
 
-#: fslint.c:57
+#: ../fslint.glade:1899
 msgid "Suspect"
 msgstr "怀疑对象"
 
-#: fslint.c:58
+#: ../fslint.glade:1919
 msgid "Relative"
 msgstr "有关的"
 
-#: fslint.c:59
+#: ../fslint.glade:1939
 msgid "Absolute"
 msgstr "完全的"
 
-#: fslint.c:60
+#: ../fslint.glade:1958
 msgid "/././. ///// /../ etc."
 msgstr "/././. ///// /../ 等等"
 
-#: fslint.c:61
+#: ../fslint.glade:1960
 msgid "Redundant naming"
 msgstr "多余的命名"
 
-#: fslint.c:64
+#: ../fslint.glade:2043
 msgid "Target"
 msgstr "标靶"
 
-#: fslint.c:65
+#: ../fslint.glade:2078
 msgid "Bad symlinks"
 msgstr "坏的链接"
 
-#: fslint.c:68
+#: ../fslint.glade:2164
 msgid "UID"
 msgstr "UID"
 
-#: fslint.c:69
+#: ../fslint.glade:2183
 msgid "GID"
 msgstr "GID"
 
-#: fslint.c:72
+#: ../fslint.glade:2256
 msgid "Bad IDs"
 msgstr "坏的IDs"
 
-#: fslint.c:76
+#: ../fslint.glade:2364 ../fslint-gui:500
 msgid "Empty directories"
 msgstr "空的文件夹"
 
-#: fslint.c:77
+#: ../fslint.glade:2394
 msgid "Search $PATH"
 msgstr "搜寻 $路径"
 
-#: fslint.c:82
+#: ../fslint.glade:2523
 msgid "Non stripped binaries"
 msgstr "没有剥离的二进制数字"
 
-#: fslint.c:87
+#: ../fslint.glade:2559
+msgid "whitespace at end of line"
+msgstr ""
+
+#: ../fslint.glade:2584
+msgid "bad indenting for indent width"
+msgstr ""
+
+#: ../fslint.glade:2746
 msgid "Redundant whitespace"
 msgstr "多余的空白"
 
-#: fslint.c:88
+#: ../fslint.glade:2832
 msgid "Find"
 msgstr "寻找"
 
-#: fslint.c:89
+#: ../fslint.glade:2907
 msgid "Stop"
 msgstr "停止"
 
-#: fslint.c:90
-msgid "selection"
-msgstr "选择"
+#: ../fslint.glade:2995
+#, fuzzy
+msgid "Select"
+msgstr "选定的"
 
-#: fslint.c:91
-msgid "Toggle"
-msgstr "开关"
-
-#: fslint.c:92
-msgid "list to file"
+#: ../fslint.glade:3026
+#, fuzzy
+msgid "Save (selected) list to file"
 msgstr "文件列表"
 
-#: fslint.c:93
+#: ../fslint.glade:3071
 msgid "Save"
 msgstr "保存"
 
-#: fslint.c:94 fslint.c:98
+#: ../fslint.glade:3102 ../fslint.glade:3267
 msgid "selected"
 msgstr "选定的"
 
-#: fslint.c:95
+#: ../fslint.glade:3147
 msgid "Delete"
 msgstr "删除"
 
-#: fslint.c:96
-msgid "All (except selected) using hardlinks"
+#: ../fslint.glade:3191
+#, fuzzy
+msgid ""
+"All (except selected) using hardlinks\n"
+"(or symlinks if on a different filesystem)"
 msgstr "所有的硬链接（除去选定的）"
 
-#: fslint.c:97
+#: ../fslint.glade:3237
 msgid "Merge"
 msgstr "混合"
 
-#: fslint.c:99
+#: ../fslint.glade:3312
 msgid "Clean"
 msgstr "清除"
 
-#: fslint.c:101
+#: ../fslint.glade:3444
 msgid "Select Path"
 msgstr "选择路径"
 
-#: ../fslint-gui:124
+#: ../fslint-gui:168
 #, python-format
 msgid "Usage: %s [OPTION] [PATHS]"
 msgstr "使用： %s 【选项】 【路径】"
 
-#: ../fslint-gui:125
-msgid "    --version       display version"
-msgstr "   --版本            显示版本"
+#: ../fslint-gui:169
+msgid "display version"
+msgstr "显示版本"
 
-#: ../fslint-gui:126
-msgid "    --help          display help"
-msgstr "   --帮助            显示帮助"
+#: ../fslint-gui:170
+msgid "display help"
+msgstr "显示帮助"
 
-#: ../fslint-gui:313
+#: ../fslint-gui:358
 #, python-format
-msgid "%s of %s is used leaving %sB available"
+msgid "%(percent)s of %(disk)s is used leaving %(size)sB available"
 msgstr ""
 
-#: ../fslint-gui:400
+#: ../fslint-gui:454
 msgid "Do you want to overwrite?\n"
 msgstr "覆盖掉原文件？\n"
 
-#: ../fslint-gui:401 ../fslint-gui:893 ../fslint-gui:1220
-msgid "Yes"
-msgstr "是"
-
-#: ../fslint-gui:401 ../fslint-gui:893 ../fslint-gui:1220
-msgid "No"
-msgstr "否"
-
-#: ../fslint-gui:408
+#: ../fslint-gui:460
 msgid "You can't overwrite "
 msgstr "不可已覆盖"
 
-#: ../fslint-gui:445
+#: ../fslint-gui:493
+msgid "Files with the same content"
+msgstr ""
+
+#: ../fslint-gui:494
+#, fuzzy
+msgid "Installed packages ordered by disk usage"
+msgstr "已安装的包"
+
+#: ../fslint-gui:495
+msgid "Problematic filenames"
+msgstr ""
+
+#: ../fslint-gui:496
+#, fuzzy
+msgid "Possibly conflicting commands or filenames"
+msgstr "相抵触的文件"
+
+#: ../fslint-gui:497
+msgid "Possibly old temporary files"
+msgstr ""
+
+#: ../fslint-gui:498
+msgid "Problematic symbolic links"
+msgstr ""
+
+#: ../fslint-gui:499
+msgid "Files with missing user IDs"
+msgstr ""
+
+#: ../fslint-gui:501
+msgid "Executables still containing debugging info"
+msgstr ""
+
+#: ../fslint-gui:502
+msgid "Erroneous whitespace in a text file"
+msgstr ""
+
+#: ../fslint-gui:508
 msgid "Invalid path ["
 msgstr "非法的路径 【"
 
-#: ../fslint-gui:497
+#: ../fslint-gui:549
+msgid "searching"
+msgstr ""
+
+#: ../fslint-gui:559
+msgid "processing..."
+msgstr ""
+
+#: ../fslint-gui:587
 msgid "No search paths specified"
 msgstr "没有指明搜寻路径"
 
-#: ../fslint-gui:641
+#: ../fslint-gui:746
 #, fuzzy
 msgid ""
 "Sorry, FSlint does not support this functionality on your system at present."
 msgstr "对不起，FSlint在您的系统上现在不支持这项功能。"
 
-#: ../fslint-gui:657
+#: ../fslint-gui:762
 msgid " packages, "
 msgstr "包"
 
-#: ../fslint-gui:658
+#: ../fslint-gui:763
 #, fuzzy, python-format
 msgid "consuming %sB. "
-msgstr "消耗 %sB"
+msgstr "消耗 %sB. "
 
-#: ../fslint-gui:659
+#: ../fslint-gui:764
 #, python-format
 msgid "Note %s."
 msgstr ""
 
-#: ../fslint-gui:670 ../fslint-gui:711 ../fslint-gui:748 ../fslint-gui:809
+#: ../fslint-gui:782 ../fslint-gui:823 ../fslint-gui:861 ../fslint-gui:923
 msgid " files"
 msgstr "文件"
 
-#: ../fslint-gui:690
+#: ../fslint-gui:802
 msgid " unstripped binaries"
 msgstr "没剥离的二进制数字"
 
-#: ../fslint-gui:700
+#: ../fslint-gui:812
 msgid " empty directories"
 msgstr "空文件夹"
 
-#: ../fslint-gui:732
+#: ../fslint-gui:844
 msgid " links"
 msgstr "链接"
 
-#: ../fslint-gui:747 ../fslint-gui:855
+#: ../fslint-gui:860 ../fslint-gui:972
 msgid " bytes wasted in "
 msgstr "字节浪费在"
 
-#: ../fslint-gui:791 ../fslint-gui:856
+#: ../fslint-gui:905 ../fslint-gui:973
 msgid " files (in "
 msgstr "个文件中 （在"
 
-#: ../fslint-gui:792 ../fslint-gui:857
+#: ../fslint-gui:906 ../fslint-gui:974
 msgid " groups)"
 msgstr "组中）"
 
-#: ../fslint-gui:842
+#: ../fslint-gui:964
 msgid "bytes wasted"
 msgstr "浪费的字节"
 
-#: ../fslint-gui:884
+#: ../fslint-gui:1039
 msgid "None selected"
 msgstr "没选中的"
 
-#: ../fslint-gui:890
+#: ../fslint-gui:1043
 msgid " this item?\n"
 msgstr "这个项目？\n"
 
-#: ../fslint-gui:892
+#: ../fslint-gui:1045
 #, python-format
 msgid " these %d items?\n"
 msgstr "这些 %d 项目？\n"
 
-#: ../fslint-gui:985
+#: ../fslint-gui:1160
 msgid "User aborted"
 msgstr "用户取消"
 
-#: ../fslint-gui:1053
+#: ../fslint-gui:1264
+msgid "Rename:"
+msgstr "重命名:"
+
+#: ../fslint-gui:1275 ../fslint-gui:1316
+#, python-format
+msgid "Error: [%s] can not be represented on your file system"
+msgstr ""
+
+#: ../fslint-gui:1285
+#, python-format
+msgid "Error: Can't rename [%(old_path)s] as [%(new_path)s] exists"
+msgstr ""
+
+#: ../fslint-gui:1305
+msgid "wildcard:"
+msgstr ""
+
+#: ../fslint-gui:1400
 msgid "Sorry, you must be root to delete system packages."
 msgstr ""
 
-#: ../fslint-gui:1057
+#: ../fslint-gui:1403
 msgid "Are you sure you want to delete"
 msgstr "确定要删除吗？"
 
-#: ../fslint-gui:1070
+#: ../fslint-gui:1416
 msgid "Calculating dependencies..."
 msgstr ""
 
-#: ../fslint-gui:1086
+#: ../fslint-gui:1429
 #, python-format
 msgid "%d extra packages need to be deleted.\n"
 msgstr ""
 
-#: ../fslint-gui:1087
+#: ../fslint-gui:1430
 msgid "Please review the updated selection."
 msgstr ""
 
-#: ../fslint-gui:1096
+#: ../fslint-gui:1438
 msgid "Removing packages..."
 msgstr ""
 
-#: ../fslint-gui:1136
+#: ../fslint-gui:1468
 msgid " items deleted"
 msgstr "删除的项目"
 
-#: ../fslint-gui:1212
+#: ../fslint-gui:1547
 msgid "Are you sure you want to merge ALL files?\n"
 msgstr "确定要混合全部文件？\n"
 
-#: ../fslint-gui:1216
+#: ../fslint-gui:1551
 msgid "(Ignoring those selected)\n"
 msgstr "（忽略被选中的)\n"
 
-#: ../fslint-gui:1247
+#: ../fslint-gui:1597
+msgid "Which indenting method do you want to convert to?"
+msgstr ""
+
+#: ../fslint-gui:1598
+msgid "Tabs"
+msgstr ""
+
+#: ../fslint-gui:1598
+msgid "Spaces"
+msgstr ""
+
+#: ../fslint-gui:1606
 msgid "Are you sure you want to clean"
 msgstr "确定要清理？"
 
-#: ../fslint-gui:1281
+#: ../fslint-gui:1648
 msgid " items cleaned ("
 msgstr "清理的项目"
 
-#: ../fslint-gui:1282
+#: ../fslint-gui:1649
 msgid " bytes saved)"
 msgstr "保存的字节"

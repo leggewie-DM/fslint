@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# vim:fileencoding=utf8
+# vim:fileencoding=utf-8
 # Note both python and vim understand the above encoding declaration
 
 # Note using env above will cause the system to register
@@ -8,7 +8,7 @@
 
 """
  FSlint - A utility to find File System lint.
- Copyright © 2000-2006 by Pádraig Brady <P@draigBrady.com>.
+ Copyright © 2000-2007 by Pádraig Brady <P@draigBrady.com>.
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ import locale
 import gtk
 import gtk.glade
 
-import os, sys, time, stat
+import os, sys, time, stat, tempfile
 
 # Maintain compatibility with Python 2.2 and below,
 # while getting rid of warnings in newer pyGtks.
@@ -56,6 +56,11 @@ except:
 class i18n:
 
     def __init__(self):
+        self._init_translations()
+        self._init_locale()
+        self._init_preferred_encoding()
+
+    def _init_translations(self):
         #gtk2 only understands utf-8 so convert to unicode
         #which will be automatically converted to utf-8 by pygtk
         gettext.install("fslint", locale_base, unicode=1)
@@ -71,13 +76,25 @@ class i18n:
             #if no glade.bindtextdomain then we'll do without
             pass
 
+    def _init_locale(self):
         try:
             locale.setlocale(locale.LC_ALL,'')
         except:
             #gtk will print warning for a duff locale
             pass
+
+    def _init_preferred_encoding(self):
         #Note python 2.3 has the nicer locale.getpreferredencoding()
+        #Note also that this encoding name is canonlicalised already
         self.preferred_encoding=locale.nl_langinfo(locale.CODESET)
+        #filename encoding can be different from default encoding
+        filename_encoding = os.environ.get("G_FILENAME_ENCODING")
+        if filename_encoding:
+            filename_encoding=filename_encoding.lower()
+            if filename_encoding == "utf8": filename_encoding="utf-8"
+            self.filename_encoding=filename_encoding
+        else:
+            self.filename_encoding=self.preferred_encoding
 
     class unicode_displayable(unicode):
         """translate non displayable chars to an appropriate representation"""
@@ -102,9 +119,10 @@ class i18n:
         #    translated_string=unicode(string).translate(cls.translate_table)
         #    return unicode.__new__(cls, translated_string)
 
-    #The following is used for display strings only
-    def utf8(self,orig,exclude=""):
-        """If orig is not a valid utf8 string,
+    def displayable_utf8(self,orig,exclude="",path=False):
+        """Convert to utf8, and also convert chars that are not
+        easily displayable (control chars currently).
+        If orig is not a valid utf8 string,
         then try to convert to utf8 using preferred encoding while
         also replacing undisplayable or invalid characters.
         Exclude contains control chars you don't want to translate."""
@@ -120,7 +138,10 @@ class i18n:
                     # replaces multiple bytes with a FFFD in utf8 locales
                     # This is silly as then you know it's not utf8 so
                     # one should try each character.
-                    uc=unicode(orig,self.preferred_encoding)
+                    if path:
+                        uc=unicode(orig,self.filename_encoding)
+                    else:
+                        uc=unicode(orig,self.preferred_encoding)
                 except:
                     uc=unicode(orig,"ascii","replace")
                     # Note I don't like the "replacement char" representation
@@ -134,13 +155,19 @@ class i18n:
         uc=self.__class__.unicode_displayable(uc).displayable(exclude)
         return uc.encode("utf-8")
 
+    def g_filename_from_utf8(self, string):
+        if self.filename_encoding != "utf-8":
+            uc=unicode(string,"utf-8")
+            string=uc.encode(self.filename_encoding) #can raise exception
+        return string
+
 I18N=i18n() #call first so everything is internationalized
 
 import getopt
 def Usage():
     print _("Usage: %s [OPTION] [PATHS]") % os.path.split(sys.argv[0])[1]
-    print _("    --version       display version")
-    print _("    --help          display help")
+    print   "    --version       " + _("display version")
+    print   "    --help          " + _("display help")
 
 try:
     lOpts, lArgs = getopt.getopt(sys.argv[1:], "", ["help","version"])
@@ -153,7 +180,7 @@ try:
         sys.exit(None)
 
     if ("--version","") in lOpts:
-        print "FSlint 2.16"
+        print "FSlint 2.22"
         sys.exit(None)
 except getopt.error, msg:
     print msg
@@ -164,7 +191,7 @@ except getopt.error, msg:
 def human_num(num, divisor=1, power=""):
     num=float(num)
     if divisor == 1:
-        return locale.format("%ld",int(num),1)
+        return locale.format("%ld",num,1)
     elif divisor == 1000:
         powers=[" ","K","M","G","T","P"]
     elif divisor == 1024:
@@ -175,11 +202,11 @@ def human_num(num, divisor=1, power=""):
     while num >= 1000: #4 digits
         num /= divisor
         power=powers[powers.index(power)+1]
-        human_num(num,divisor,power)
     if power.strip():
-        return "%6.1f%s" % (num,power)
+        num = locale.format("%6.1f",num,1)
     else:
-        return "%4ld  %s" % (num,power)
+        num = locale.format("%4ld  ",num,1)
+    return "%s%s" % (num,power)
 
 class GladeWrapper:
     """
@@ -327,7 +354,9 @@ dist_type=distroType()
 def human_space_left(where):
     (device, total, used_b, avail, used_p, mount)=\
     os.popen("df -h %s | tail -1"%where).read().split()
-    return _("%s of %s is used leaving %sB available") % (used_p, mount, avail)
+    translation_map={"percent":used_p, "disk":mount, "size":avail}
+    return _("%(percent)s of %(disk)s is used leaving %(size)sB available") %\
+             translation_map
 
 class dlgUserInteraction(GladeWrapper):
     """
@@ -335,9 +364,11 @@ class dlgUserInteraction(GladeWrapper):
     so that the stock buttons are used if possible. But the
     translations should be available, so use N_ for input
     buttons tuple text. Note the returned response is not
-    translated either.
+    translated either. Note also, that if you know a stock
+    button is already available, then there's no point in
+    translating the passed in string.
     """
-    def init(self, app, message, buttons=('Ok',)):
+    def init(self, app, message, buttons, entry_default):
         for text in buttons:
             try:
                 stock_text=getattr(gtk,"STOCK_"+text.upper())
@@ -348,14 +379,22 @@ class dlgUserInteraction(GladeWrapper):
             button.connect("clicked", self.button_clicked)
             self.GtkWindow.action_area.pack_start(button)
             button.show()
+            button.set_flags(gtk.CAN_DEFAULT)
+            button.grab_default() #last button is default
         self.app = app
         self.lblmsg.set_text(message)
         self.lblmsg.show()
+        if message.endswith(":"):
+            if entry_default:
+                self.entry.set_text(entry_default)
+            self.entry.show()
+        else:
+            self.entry.hide()
 
     def show(self):
-        self.response=None
+        self.response=self.input=None
         self.GtkWindow.set_transient_for(self.app.GtkWindow)#center on main win
-        self.GtkWindow.show()
+        self.GtkWindow.show() #Note dialog is initially hidden in glade file
         if self.GtkWindow.modal:
             gtk.main() #synchronous call from parent
         #else: not supported
@@ -365,13 +404,13 @@ class dlgUserInteraction(GladeWrapper):
     #################
 
     def quit(self, *args):
-        self.GtkWindow.hide()
         if self.GtkWindow.modal:
             gtk.main_quit()
 
     def button_clicked(self, button):
+        self.input = self.entry.get_text()
         self.response = button.get_data("text")
-        self.quit()
+        self.GtkWindow.destroy()
 
 class dlgPathSel(GladeWrapper):
 
@@ -379,15 +418,15 @@ class dlgPathSel(GladeWrapper):
         self.app = app
         self.pwd = self.app.pwd
 
-    def show(self, fileOps=0):
+    def show(self, fileOps=0, filename=None):
         self.canceled=1
         self.fileOps = fileOps
-        self.GtkWindow.set_filename(self.pwd+'/')
+        if not filename: filename=self.pwd+'/'
+        self.GtkWindow.set_filename(filename)
         if self.fileOps:
             self.GtkWindow.show_fileop_buttons()
         else:
             self.GtkWindow.hide_fileop_buttons()
-        #self.GtkWindow.set_parent(self.app.GtkWindow)#error (on gtk-1.2.10-11?)
         self.GtkWindow.set_transient_for(self.app.GtkWindow)#center on main win
         self.GtkWindow.show()
         if self.GtkWindow.modal:
@@ -411,19 +450,14 @@ class dlgPathSel(GladeWrapper):
             file = self.GtkWindow.get_filename()
             if os.path.exists(file):
                 if os.path.isfile(file):
-                    msgbox=dlgUserInteraction(liblocation+"/fslint.glade",
-                                              "UserInteraction")
-                    msgbox.init(self,
-                                _("Do you want to overwrite?\n") + file,
-                                (N_('Yes'), N_('No')))
-                    msgbox.show()
-                    if msgbox.response != "Yes":
+                    (response, input) = self.app.msgbox(
+                      _("Do you want to overwrite?\n") + file,
+                      ('Yes', 'No')
+                    )
+                    if response != "Yes":
                         return
                 else:
-                    msgbox=dlgUserInteraction(liblocation+"/fslint.glade",
-                                              "UserInteraction")
-                    msgbox.init(self, _("You can't overwrite ") + file)
-                    msgbox.show()
+                    self.app.msgbox(_("You can't overwrite ") + file)
                     return
         self.canceled=0
         self.quit()
@@ -455,14 +489,29 @@ class fslint(GladeWrapper):
             self.mode_ns:self.clist_ns,
             self.mode_rs:self.clist_rs
         }
+        self.mode_descs = {
+            self.mode_up:_("Files with the same content"),
+            self.mode_pkgs:_("Installed packages ordered by disk usage"),
+            self.mode_nl:_("Problematic filenames"),
+            self.mode_sn:_("Possibly conflicting commands or filenames"),
+            self.mode_tf:_("Possibly old temporary files"),
+            self.mode_bl:_("Problematic symbolic links"),
+            self.mode_id:_("Files with missing user IDs"),
+            self.mode_ed:_("Empty directories"),
+            self.mode_ns:_("Executables still containing debugging info"),
+            self.mode_rs:_("Erroneous whitespace in a text file")
+        }
         for path in lArgs:
             if os.path.exists(path):
                 self.addDirs(self.ok_dirs, os.path.abspath(path))
             else:
                 self.ShowErrors(_("Invalid path [") + path + "]")
-        for bad_dir in ['/lost+found','/dev','/proc','/sys','/tmp']:
+        for bad_dir in ['/lost+found','/dev','/proc','/sys','/tmp',
+                        '/*.svn','/*CVS']:
             self.addDirs(self.bad_dirs, bad_dir)
+        self._alloc_mouse_cursors()
         self.mode=0
+        self.status.set_text(self.mode_descs[self.mode])
         self.bg_colour=self.vpanes.get_style().bg[gtk.STATE_NORMAL]
         #make readonly GtkEntry and GtkTextView widgets obviously so,
         #by making them the same colour as the surrounding panes
@@ -473,17 +522,42 @@ class fslint(GladeWrapper):
         self.clist_pkgs.set_column_visibility(2,0)
         self.clist_ns.set_column_justification(2,gtk.JUSTIFY_RIGHT)
 
+    def _alloc_mouse_cursors(self):
+        #The following is the cursor used by mozilla and themed by X/distros
+        left_ptr_watch = \
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x0c\x00\x00\x00"\
+        "\x1c\x00\x00\x00\x3c\x00\x00\x00\x7c\x00\x00\x00\xfc\x00\x00\x00"\
+        "\xfc\x01\x00\x00\xfc\x3b\x00\x00\x7c\x38\x00\x00\x6c\x54\x00\x00"\
+        "\xc4\xdc\x00\x00\xc0\x44\x00\x00\x80\x39\x00\x00\x80\x39"+"\x00"*66
+        try:
+            pix = gtk.gdk.bitmap_create_from_data(None, left_ptr_watch, 32, 32)
+            color = gtk.gdk.Color()
+            self.LEFT_PTR_WATCH=gtk.gdk.Cursor(pix, pix, color, color, 2, 2)
+            #Note mask is ignored when doing the hash
+        except TypeError:
+            #http://bugzilla.gnome.org/show_bug.cgi?id=103616 #older pygtks
+            #http://bugzilla.gnome.org/show_bug.cgi?id=318874 #pygtk-2.8.[12]
+            #Note pygtk-2.8.1 was released with ubuntu breezy :(
+            self.LEFT_PTR_WATCH=None #default cursor
+        self.SB_V_DOUBLE_ARROW=gtk.gdk.Cursor(gtk.gdk.SB_V_DOUBLE_ARROW)
+        self.XTERM=gtk.gdk.Cursor(gtk.gdk.XTERM) #I beam
+
     def get_fslint(self, command, delim='\n'):
-        fslintproc = subProcess(command)
-        while fslintproc.read(timeout=0.1):
+        self.fslintproc = subProcess(command)
+        count=0
+        while self.fslintproc.read(timeout=0.1):
+            self.status.set_text(_("searching")+"."*(count%10))
+            count+=1
             while gtk.events_pending(): gtk.main_iteration(False)
             if self.stopflag:
-                fslintproc.kill()
+                self.fslintproc.kill()
                 break
         else:
-            fslintproc.outdata=fslintproc.outdata.split(delim)[:-1]
-            ret = (fslintproc.outdata, fslintproc.errdata)
-        fslintproc.cleanup()
+            self.fslintproc.outdata=self.fslintproc.outdata.split(delim)[:-1]
+            ret = (self.fslintproc.outdata, self.fslintproc.errdata)
+        del(self.fslintproc)
+        self.status.set_text(_("processing..."))
+        while gtk.events_pending(): gtk.main_iteration(False)
         if self.stopflag:
             raise self.UserAbort
         else:
@@ -492,9 +566,8 @@ class fslint(GladeWrapper):
     def ShowErrors(self, lines):
         if len(lines) == 0:
             return
-        elif lines[-1] == '\n':
-            lines = lines[:-1]
-        self.errors.get_buffer().set_text(I18N.utf8(lines,"\n"))
+        end=self.errors.get_buffer().get_end_iter()
+        self.errors.get_buffer().insert(end,I18N.displayable_utf8(lines,"\n"))
 
     def ClearErrors(self):
         self.errors.get_buffer().set_text("")
@@ -515,7 +588,8 @@ class fslint(GladeWrapper):
 
         search_dirs = ""
         for row in range(self.ok_dirs.rows):
-            search_dirs = search_dirs + " '" + self.ok_dirs.get_row_data(row) + "'"
+            search_dirs = search_dirs + \
+                          " '" + self.ok_dirs.get_row_data(row) + "'"
         exclude_dirs=""
 
         for row in range(self.bad_dirs.rows):
@@ -539,7 +613,7 @@ class fslint(GladeWrapper):
 
     def addDirs(self, dirlist, dirs):
         """Adds items to passed clist."""
-        dirlist.append([I18N.utf8(dirs)])
+        dirlist.append([I18N.displayable_utf8(dirs,path=True)])
         dirlist.set_row_data(dirlist.rows-1, dirs)
 
     def removeDirs(self, dirlist):
@@ -569,7 +643,7 @@ class fslint(GladeWrapper):
     def clist_append_path(self, clist, path, colour, *rest):
         """append path to clist, handling utf8 and colour issues"""
         colour = self.clist_alloc_colour(clist, colour)
-        utf8_path=I18N.utf8(path)
+        utf8_path=I18N.displayable_utf8(path,path=True)
         (dir,file)=os.path.split(utf8_path)
         clist.append((file,dir)+rest)
         row_data = clist.get_data("row_data")
@@ -584,6 +658,20 @@ class fslint(GladeWrapper):
         row_data.append('#'+"\t".join(cols).rstrip()+'\n')
         clist.set_background(clist.rows-1,self.bg_colour)
         clist.set_selectable(clist.rows-1,0)
+
+    def clist_remove_empty_groups(self, clist):
+        row_data = clist.get_data("row_data")
+        rowver=clist.rows
+        rows_left = range(rowver)
+        rows_left.reverse()
+        for row in rows_left:
+            if clist.get_selectable(row) == False:
+                if (row == clist.rows-1) or (clist.get_selectable(row+1) ==
+                    False):
+                    clist.remove(row)
+                    if self.mode != self.mode_pkgs:
+                        row_data.pop(row)
+
 
     def get_path_info(self, path):
         """Returns path info appropriate for display, i.e.
@@ -617,7 +705,7 @@ class fslint(GladeWrapper):
         size=stat_val.st_blocks*512
 
         return (colour, stat_val[stat.ST_SIZE], size, stat_val[stat.ST_UID],
-                stat_val[stat.ST_GID], date)
+                stat_val[stat.ST_GID], date, stat_val[stat.ST_MTIME])
 
     def whatRequires(self, packages, level=0):
         if not packages: return
@@ -677,10 +765,17 @@ on your system at present."))
         #Note pkgs generally installed on root partition so report space left.
 
     def findrs(self, clist_rs):
-        po, pe = self.get_fslint("./findrs " + self.findParams)
+        options=""
+        if self.chkWhitespace.get_active():
+            options+="-w "
+        if self.chkTabs.get_active():
+            options+="-t%d " % int(self.spinTabs.get_value())
+        if not options:
+            return ("","")
+        po, pe = self.get_fslint("./findrs " + options + self.findParams)
         row = 0
         for line in po:
-            colour, fsize, size, uid, gid, date = self.get_path_info(line)
+            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
             self.clist_append_path(clist_rs, line, colour, str(fsize), date)
             row=row+1
 
@@ -694,7 +789,7 @@ on your system at present."))
 
         unstripped=[]
         for line in po:
-            colour, fsize, size, uid, gid, date = self.get_path_info(line)
+            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
             unstripped.append((fsize, line, date))
         unstripped.sort()
         unstripped.reverse()
@@ -710,7 +805,7 @@ on your system at present."))
         po, pe = self.get_fslint("./finded " + self.findParams)
         row = 0
         for line in po:
-            colour, fsize, size, uid, gid, date = self.get_path_info(line)
+            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
             self.clist_append_path(clist_ed, line, '', date)
             row += 1
 
@@ -720,7 +815,7 @@ on your system at present."))
         po, pe = self.get_fslint("./findid " + self.findParams, '\0')
         row = 0
         for record in po:
-            colour, fsize, size, uid, gid, date = self.get_path_info(record)
+            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(record)
             self.clist_append_path(clist_id, record, colour,
                                    str(uid), str(gid), str(fsize), date)
             row += 1
@@ -757,7 +852,7 @@ on your system at present."))
         row = 0
         byteWaste = 0
         for line in po:
-            colour, fsize, size, uid, gid, date = self.get_path_info(line)
+            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
             self.clist_append_path(clist_tf, line, '', str(fsize), date)
             byteWaste+=size
             row += 1
@@ -799,8 +894,9 @@ on your system at present."))
                 self.clist_append_group_row(clist_sn, ['','',''])
                 findsn_groups += 1
             else:
-                colour, fsize, size, uid, gid, date = self.get_path_info(record)
+                colour,fsize,size,uid,gid,date,mtime=self.get_path_info(record)
                 self.clist_append_path(clist_sn, record, colour, str(fsize))
+                clist_sn.set_row_data(clist_sn.rows-1,mtime)
                 findsn_number += 1
             row += 1
         if findsn_number:
@@ -820,18 +916,21 @@ on your system at present."))
 
         row=0
         for record in po:
-            colour, fsize, size, uid, gid, date = self.get_path_info(record)
+            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(record)
             self.clist_append_path(clist_nl, record, colour)
             row += 1
 
         return (str(row) + _(" files"), pe)
 
     def findup(self, clist_dups):
-        po, pe = self.get_fslint("./findup " + self.findParams + " --gui")
+        po, pe = self.get_fslint("./findup " + self.findParams + " -f")
 
         numdups = size = fsize = 0
+        dups = []
         alldups = []
         inodes = {}
+        #inodes required to correctly report disk usage of
+        #duplicate files with seperate inode groups.
         for line in po:
             line = line.strip()
             if line == '': #grouped == 1
@@ -841,8 +940,8 @@ on your system at present."))
                 numdups = 0
                 inodes = {}
             else:
-                colour, fsize, size, uid, gid, date = self.get_path_info(line)
-                dups.append((line,date))
+                colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
+                dups.append((line,date,mtime))
                 inode = os.lstat(line)[stat.ST_INO]
                 if not inodes.has_key(inode):
                     inodes[inode] = True
@@ -867,6 +966,7 @@ on your system at present."))
             row += 1
             for file in files:
                 self.clist_append_path(clist_dups,file[0],'',file[1])
+                clist_dups.set_row_data(row,file[2]) #mtime
                 row += 1
 
         return (human_num(byteWaste) + _(" bytes wasted in ") +
@@ -876,17 +976,55 @@ on your system at present."))
     find_dispatch = (findup,findpkgs,findnl,findsn,findtf,
                      findbl,findid,finded,findns,findrs) #order NB
 
-    def enable_stop(self):
+    def set_cursor(self, requested_cursor):
+        #TODO: horizontal arrows for GtkClist column resize handles not set
+        cursor=requested_cursor
+        if not self.GtkWindow.window: return #window closed
+        self.GtkWindow.window.set_cursor(cursor)
+        if requested_cursor==None: cursor=self.XTERM #I beam
+        for gtkentry in (self.status, self.extra_find_params):
+            if not gtkentry.window: continue #not realised yet
+            gtkentry.window.set_cursor(cursor)
+            gtkentry.window.get_children()[0].set_cursor(cursor)
+        for gtkspinbutton in (self.spin_tf_core, self.spinTabs):
+            if not gtkspinbutton.window: continue #not realised yet
+            gtkspinbutton.window.set_cursor(cursor)
+            gtkspinbutton.window.get_children()[0].set_cursor(cursor)
+        for gtktextview in (self.errors,):
+            if not gtktextview.window: continue #not realised yet
+            gtktextview.window.set_cursor(cursor)
+            gtktextview.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(cursor)
+        if requested_cursor==None: cursor=self.SB_V_DOUBLE_ARROW
+        for gtkpaned in (self.vpanes,):
+            if not gtkpaned.window: continue #not realised yet
+            try:
+                handle_size=gtkpaned.style_get_property("handle-size")#pygtk-2.4
+            except:
+                break
+            for window in gtkpaned.window.get_children():
+                width,height=window.get_size()
+                if width==handle_size or height==handle_size:
+                    window.set_cursor(cursor)
+
+    def look_busy(self):
         self.find.hide()
         self.stop.show()
         self.stop.grab_focus()
         self.stop.grab_add() #Just allow app to stop
+        self.set_cursor(self.LEFT_PTR_WATCH)
 
-    def disable_stop(self):
+    def look_interactive(self):
         self.stop.grab_remove()
         self.stop.hide()
         self.find.show()
         self.find.grab_focus() #as it already would have been in focus
+        self.set_cursor(None)
+
+    def msgbox(self, message, buttons=('Ok',), entry_default=None):
+        msgbox=dlgUserInteraction(liblocation+"/fslint.glade","UserInteraction")
+        msgbox.init(self, message, buttons, entry_default)
+        msgbox.show()
+        return (msgbox.response, msgbox.input)
 
     def check_user(self, question):
         self.ClearErrors()
@@ -901,15 +1039,12 @@ on your system at present."))
             self.ShowErrors(_("None selected"))
             return False
         else:
-            msgbox = dlgUserInteraction(liblocation+"/fslint.glade",
-                                        "UserInteraction")
             if len(paths) == 1:
                 question += _(" this item?\n")
             else:
-                question += _(" these %d items?\n") %  len(paths)
-            msgbox.init(self, question, (N_('Yes'), N_('No')))
-            msgbox.show()
-            if msgbox.response != "Yes":
+                question += _(" these %d items?\n") % len(paths)
+            (response, input) = self.msgbox(question, ('Yes', 'No'))
+            if response != "Yes":
                 return False
             return True
 
@@ -918,6 +1053,11 @@ on your system at present."))
     #################
 
     def on_fslint_destroy(self, event):
+        try:
+            self.fslintproc.kill()
+            del(self.fslintproc)
+        except:
+            pass #fslint wasn't searching
         gtk.main_quit()
 
     def on_addOkDir_clicked(self, event):
@@ -955,9 +1095,9 @@ on your system at present."))
             self.lbl_findnl_sensitivity.show()
 
     def on_fslint_functions_switch_page(self, widget, dummy, pagenum):
-        self.status.delete_text(0,-1)
         self.ClearErrors()
         self.mode=pagenum
+        self.status.set_text(self.mode_descs[self.mode])
         if self.mode == self.mode_up:
             self.autoMerge.show()
         else:
@@ -966,6 +1106,24 @@ on your system at present."))
             self.autoClean.show()
         else:
             self.autoClean.hide()
+
+    def on_selection_menu_button_press_event(self, widget, event):
+        if self.mode == self.mode_up or self.mode == self.mode_sn:
+            self.groups_menu.show()
+        else:
+            self.groups_menu.hide()
+        if event == None: #standard button click
+            self.selection_menu_menu.popup(None,None,None,3,0) #at mouse pointer
+        elif type(widget) == gtk.CList and event.button == 3:
+            menu=self.selection_menu_menu
+            if self.mode != self.mode_pkgs:
+                sel=widget.get_selection_info(int(event.x),int(event.y))
+                if sel:
+                    row,col=sel
+                    selected = widget.selection
+                    if len(selected)==1 and row in selected:
+                        menu=self.edit_menu_menu
+            menu.popup(None,None,None,event.button,event.time)
 
     def on_find_clicked(self, event):
 
@@ -989,7 +1147,7 @@ on your system at present."))
             clist.set_data("row_data",[])
             if self.mode == self.mode_pkgs:
                 self.pkg_info.get_buffer().set_text("")
-            self.enable_stop()
+            self.look_busy()
             self.stopflag=0
             while gtk.events_pending(): gtk.main_iteration(False)#update GUI
             clist.freeze()
@@ -1008,10 +1166,9 @@ on your system at present."))
         os.chdir(self.pwd)
         self.ShowErrors(errors)
         self.status.set_text(status)
-        self.disable_stop()
+        self.look_interactive()
 
     def on_stop_clicked(self, event):
-        self.disable_stop()
         self.stopflag=1
 
     def on_stop_keypress(self, button, event):
@@ -1029,24 +1186,197 @@ on your system at present."))
             pass
         return True
 
+    def on_fslint_keypress(self, button, event):
+        #ingore capslock and numlock
+        state = event.state & ~(gtk.gdk.LOCK_MASK | gtk.gdk.MOD2_MASK)
+        ksyms=gtk.keysyms
+        if state == int(gtk.gdk.CONTROL_MASK):
+            if event.keyval in (ksyms.c, ksyms.C):
+                self.on_copy_activate(event)
+        if state == 0:
+            if event.keyval in (ksyms.F2,):
+                self.on_rename_activate(event)
+
     def on_saveAs_clicked(self, event):
         clist = self.clists[self.mode]
         if clist.rows == 0:
             return
         self.dlgPathSel.show(1)
         if not self.dlgPathSel.canceled:
+            self.ClearErrors()
             fileSaveAs = self.dlgPathSel.GtkWindow.get_filename()
-            fileSaveAs = open(fileSaveAs, 'w')
+            try:
+                fileSaveAs = open(fileSaveAs, 'w')
+            except:
+                etype, emsg, etb = sys.exc_info()
+                self.ShowErrors(str(emsg)+'\n')
+                return
+            rows_to_save = clist.selection
             if self.mode == self.mode_pkgs:
                 for row in range(clist.rows):
+                    if len(rows_to_save):
+                        if row not in rows_to_save: continue
                     rowtext = ''
                     for col in (0,2): #ignore "human number" col
                         rowtext += clist.get_text(row,col) +'\t'
                     fileSaveAs.write(rowtext[:-1]+'\n')
             else:
-                fileSaveAs.writelines(clist.get_data("row_data"))
+                row_data=clist.get_data("row_data")
+                if len(rows_to_save):
+                    for row in range(clist.rows):
+                        if clist.get_selectable(row):
+                            if row not in rows_to_save: continue
+                        else: continue #don't save group headers
+                        fileSaveAs.write(row_data[row])
+                else:
+                    fileSaveAs.writelines(row_data)
 
-    def on_toggleSelection_clicked(self, event):
+    def on_copy_activate(self, event):
+        clist = self.clists[self.mode]
+        if self.mode==self.mode_pkgs or len(clist.selection)!=1:
+            return
+
+        row_data=clist.get_data("row_data")
+        row=clist.selection[0] #menu item only enabled if 1 item selected
+        utf8_name=clist.get_text(row,0)
+        path_name=row_data[row][:-1]
+
+        dir,name=os.path.split(path_name)
+        if name != utf8_name:
+            import urllib
+            path="file://"+urllib.pathname2url(path_name)
+        else:
+            path=dir+'/'+utf8_name
+
+        clipboard=clist.get_clipboard("CLIPBOARD")
+        clipboard.set_text(path, -1)
+
+    def on_rename_activate(self, event):
+        clist = self.clists[self.mode]
+        if self.mode==self.mode_pkgs or len(clist.selection)!=1:
+            return
+
+        row_data=clist.get_data("row_data")
+        row=clist.selection[0] #menu item only enabled if 1 item selected
+        utf8_name=clist.get_text(row,0)
+        path_name=row_data[row][:-1]
+
+        (response,new_path)=self.msgbox(_("Rename:"),('Cancel','Ok'),utf8_name)
+        if response != "Ok":
+            return
+
+        self.ClearErrors()
+        if not (self.mode==self.mode_nl and self.chk_findu8.get_active()):
+            try:
+                new_encoded_path=I18N.g_filename_from_utf8(new_path)
+            except UnicodeEncodeError:
+                new_encoded_path=None
+                self.ShowErrors(_(
+                "Error: [%s] can not be represented on your file system") %\
+                (new_path) +'\n')
+        else:
+            new_encoded_path=new_path #leave in (displayable) utf-8
+        if new_encoded_path:
+            dir,base=os.path.split(path_name)
+            new_encoded_path=dir+'/'+new_encoded_path
+            if os.path.exists(new_encoded_path):
+                translation_map={"old_path":utf8_name, "new_path":new_path}
+                self.ShowErrors(_(
+                "Error: Can't rename [%(old_path)s] as "\
+                "[%(new_path)s] exists") % translation_map + '\n')
+            else:
+                try:
+                    os.rename(path_name, new_encoded_path)
+                    row_data.pop(row)
+                    clist.remove(row)
+                    self.clist_remove_empty_groups(clist)
+                except OSError:
+                    self.ShowErrors(str(sys.exc_value)+'\n')
+
+    def on_unselect_using_wildcard_activate(self, event):
+        self.select_using_wildcard(False)
+    def on_select_using_wildcard_activate(self, event):
+        self.select_using_wildcard(True)
+    def select_using_wildcard(self, select):
+        clist = self.clists[self.mode]
+        if clist.rows == 0:
+            return
+
+        (response, wildcard) = self.msgbox(_("wildcard:"), ('Cancel', 'Ok'))
+        if response!="Ok" or not wildcard:
+            return
+
+        self.ClearErrors()
+        if '/' in wildcard:
+            #Convert from utf8 if required so can match non utf-8 paths
+            try:
+                wildcard=I18N.g_filename_from_utf8(wildcard)
+            except UnicodeEncodeError:
+                self.ShowErrors(_(
+                "Error: [%s] can not be represented on your file system") %\
+                (wildcard) +'\n')
+                return
+        else:
+            #Convert to unicode to match unicode string below
+            wildcard=unicode(wildcard, "utf-8")
+        select_func=select and clist.select_row or clist.unselect_row
+        if '/' not in wildcard or self.mode == self.mode_pkgs:
+            #Convert to unicode so ? in glob matching works correctly
+            get_text = lambda row: unicode(clist.get_text(row,0),"utf-8")
+        else: #Note fnmatch ignores trailing \n
+            row_data = clist.get_data("row_data")
+            get_text = lambda row: row_data[row]
+        import fnmatch
+        for row in range(clist.rows):
+            if fnmatch.fnmatch(get_text(row), wildcard):
+                select_func(row, 0)
+
+    def on_select_all_but_first_in_each_group_activate(self, event):
+        self.on_select_all_but_one_in_each_group_activate("first")
+    def on_select_all_but_newest_in_each_group_activate(self, event):
+        self.on_select_all_but_one_in_each_group_activate("newest")
+    def on_select_all_but_oldest_in_each_group_activate(self, event):
+        self.on_select_all_but_one_in_each_group_activate("oldest")
+
+    def on_select_all_but_one_in_each_group_activate(self, which):
+
+        def find_row_to_unselect(clist, row, which):
+            import operator
+            if which == "first":
+                if clist.get_selectable(row)==False:
+                   return row+1
+                else:
+                    return row #for first row in clist_sn
+            elif which == "newest":
+                unselect_mtime=-1
+                comp=operator.gt
+            elif which == "oldest":
+                unselect_mtime=2**32
+                comp=operator.lt
+            if clist.get_selectable(row)==False: #not the case for first sn row
+                row=row+1
+            while clist.get_selectable(row) == True and row < clist.rows:
+                mtime = clist.get_row_data(row)
+                if comp(mtime,unselect_mtime):
+                    unselect_mtime = mtime
+                    unselect_row=row
+                row=row+1
+            return unselect_row
+
+        clist = self.clists[self.mode]
+        clist.freeze()
+        clist.select_all()
+        for row in range(clist.rows):
+            if row==0 or clist.get_selectable(row)==False: #New group
+                unselect_row = find_row_to_unselect(clist, row, which)
+                clist.unselect_row(unselect_row, 0)
+        clist.thaw()
+
+    def on_unselect_all_activate(self, event):
+        clist = self.clists[self.mode]
+        clist.unselect_all()
+
+    def on_toggle_selection_activate(self, event):
         clist = self.clists[self.mode]
         clist.freeze()
         selected = clist.selection
@@ -1060,16 +1390,15 @@ on your system at present."))
                 clist.unselect_row(row, 0)
         clist.thaw()
 
+    def on_selection_clicked(self, widget):
+        self.on_selection_menu_button_press_event(self.selection, None)
+
     def on_delSelected_clicked(self, event):
         if self.mode == self.mode_pkgs:
             if os.geteuid() != 0:
-                msgbox=dlgUserInteraction(liblocation+"/fslint.glade",
-                                          "UserInteraction")
-                msgbox.init(
-                  self,
+                self.msgbox(
                   _("Sorry, you must be root to delete system packages.")
                 )
-                msgbox.show()
                 return
         if not self.check_user(_("Are you sure you want to delete")):
             return
@@ -1096,14 +1425,10 @@ on your system at present."))
                         for row in range(clist.rows):
                             if package == clist.get_row_data(row):
                                 clist.select_row(row,0)
-                msgbox=dlgUserInteraction(liblocation+"/fslint.glade",
-                                          "UserInteraction")
-                msgbox.init(
-                  self,
+                self.msgbox(
                   _("%d extra packages need to be deleted.\n") % num_new_pkgs +
                   _("Please review the updated selection.")
                 )
-                msgbox.show()
                 #Note this is not ideal as it's difficult for users
                 #to get info on selected packages (Ctrl click twice).
                 #Should really have a seperate marked_for_deletion  column.
@@ -1136,17 +1461,7 @@ on your system at present."))
             clist.remove(row)
             numDeleted += 1
 
-        #Remove any redundant grouping rows
-        rowver=clist.rows
-        rows_left = range(rowver)
-        rows_left.reverse()
-        for row in rows_left:
-            if clist.get_selectable(row) == False:
-                if (row == clist.rows-1) or (clist.get_selectable(row+1) ==
-                    False):
-                    clist.remove(row)
-                    if self.mode != self.mode_pkgs:
-                        row_data.pop(row)
+        self.clist_remove_empty_groups(clist)
 
         clist.columns_autosize()
         clist.thaw()
@@ -1193,8 +1508,11 @@ on your system at present."))
     #function below from being called too frequently.
     #Note most users will scoll the list with {Up,Down} rather
     #than Ctrl+{Up,Down}, but at worst this will result in slow scrolling.
-    def on_clist_pkgs_button_press(self, *args):
-        self.clist_pkgs_user_input=True
+    def on_clist_pkgs_button_press(self, list, event):
+        if event.button == 3:
+            self.on_selection_menu_button_press_event(list, event)
+        else:
+            self.clist_pkgs_user_input=True
     def on_clist_pkgs_key_press(self, *args):
         self.clist_pkgs_user_input=True
 
@@ -1216,7 +1534,7 @@ on your system at present."))
         pkg_process = subProcess(cmd)
         pkg_process.read()
         lines=pkg_process.outdata
-        self.pkg_info.get_buffer().set_text(I18N.utf8(lines,"\n"))
+        self.pkg_info.get_buffer().set_text(I18N.displayable_utf8(lines,"\n"))
         del(pkg_process)
 
     def on_autoMerge_clicked(self, event):
@@ -1232,11 +1550,8 @@ on your system at present."))
         if len(paths_to_leave):
             question+=_("(Ignoring those selected)\n")
 
-        msgbox = dlgUserInteraction(liblocation+"/fslint.glade",
-                                    "UserInteraction")
-        msgbox.init(self, question, (N_('Yes'), N_('No')))
-        msgbox.show()
-        if msgbox.response != "Yes":
+        (response, input) = self.msgbox(question, ('Yes', 'No'))
+        if response != "Yes":
             return
 
         newGroup = 0
@@ -1253,16 +1568,58 @@ on your system at present."))
                     newGroup = 0
                 else:
                     dupfile = path
+                    dupdir = os.path.dirname(dupfile)
+                    tmpfile = tempfile.mktemp(dir=dupdir)
                     try:
-                        os.unlink(dupfile)
-                        os.link(keepfile,dupfile) #Don't do this for autodelete
+                        try:
+                            os.link(keepfile,tmpfile)
+                        except OSError, value:
+                            if value.errno == 18: #EXDEV
+                                os.symlink(os.path.realpath(keepfile),tmpfile)
+                            else:
+                                raise
+                        os.rename(tmpfile, dupfile)
                         clist.set_background(row, self.bg_colour)
                     except OSError:
                         self.ShowErrors(str(sys.exc_value)+'\n')
+                    try:
+                        #always try this as POSIX has bad requirement that
+                        #rename(file1,file2) where both are links to the same
+                        #file, does nothing, and returns success. So if user
+                        #merges files multiple times, tmp files will be left.
+                        os.unlink(tmpfile)
+                    except:
+                        pass
 
     def on_autoClean_clicked(self, event):
-        if not self.check_user(_("Are you sure you want to clean")):
+        if self.mode == self.mode_rs and self.chkTabs.get_active():
+            (response, input) = self.msgbox(
+              _("Which indenting method do you want to convert to?"),
+              (N_('Tabs'), N_('Spaces'), 'Cancel')
+            )
+            if response == "Spaces":
+                indents="--indent-spaces"
+            elif response == "Tabs":
+                indents="--indent-tabs"
+            else:
+                return
+        elif not self.check_user(_("Are you sure you want to clean")):
             return
+
+        if self.mode == self.mode_rs:
+            if not self.chkTabs.get_active():
+                indents="''"
+            if not self.chkWhitespace.get_active():
+                eol="''"
+            else:
+                eol="--eol"
+            command=liblocation+"/fslint/supprt/rmlint/fix_ws.sh "+\
+                    eol+" "+\
+                    indents+" "+\
+                    str(int(self.spinTabs.get_value()))
+        elif self.mode == self.mode_ns:
+            command="strip"
+
         clist = self.clists[self.mode]
         paths_to_clean = clist.selection
 
@@ -1273,21 +1630,14 @@ on your system at present."))
             try:
                 path_to_clean = row_data[row][:-1] #strip '\n'
                 startlen = os.stat(path_to_clean)[stat.ST_SIZE]
-                if self.mode == self.mode_ns:
-                    stripProcess = subProcess("strip "+path_to_clean)
-                    stripProcess.read()
-                    errors = stripProcess.errdata
-                    stripProcess.cleanup()
-                    if len(errors):
-                        raise '', errors[:-1]
-                elif self.mode == self.mode_rs:
-                    file_to_clean = open(path_to_clean,'r')
-                    lines = open(path_to_clean,'r').readlines()
-                    file_to_clean.close()
-                    file_to_clean = open(path_to_clean,'w')
-                    lines = map(lambda s: s.rstrip()+'\n', lines)
-                    file_to_clean.writelines(lines)
-                    file_to_clean.close()
+
+                cleanProcess = subProcess(command+" '"+path_to_clean+"'")
+                cleanProcess.read()
+                errors = cleanProcess.errdata
+                del(cleanProcess)
+                if len(errors):
+                    raise '', errors[:-1]
+
                 clist.set_background(row, self.bg_colour)
                 clist.unselect_row(row,0)
                 totalSaved += startlen - os.stat(path_to_clean)[stat.ST_SIZE]
@@ -1299,6 +1649,6 @@ on your system at present."))
                   human_num(totalSaved) + _(" bytes saved)")
         self.status.set_text(status)
 
-FSlint = fslint(liblocation+"/fslint.glade", "fslint")
+FSlint=fslint(liblocation+"/fslint.glade", "fslint")
 
 gtk.main ()

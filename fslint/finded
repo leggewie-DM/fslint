@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # finded - find empty directories
-# Copyright © 2000-2006 by Pádraig Brady <P@draigBrady.com>.
+# Copyright © 2000-2007 by Pádraig Brady <P@draigBrady.com>.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,4 +42,6 @@ done
 
 . $script_dir/supprt/getfpf "$argsToPassOn"
 
-find "$@" -empty -type d -printf "$FPF\n"
+find "$@" -empty -type d ! -name "*$LF*" -printf "$FPF\0" |
+sort -zu | #merge dirs (indirectly) specified multiple times
+xargs -r0 ls -bUd --

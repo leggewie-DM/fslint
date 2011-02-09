@@ -5,16 +5,16 @@ DOMAIN = fslint
 all: mo
 
 #create pot file
-$(DOMAIN).pot: fslint.c ../fslint-gui
-	xgettext -k_ -kN_ -d$(DOMAIN) fslint.c -o $(DOMAIN).pot
-	xgettext -k_ -kN_ -d$(DOMAIN) -Lpython ../fslint-gui -o $(DOMAIN).pot -j
+$(DOMAIN).pot: ../fslint.glade ../fslint-gui
+	xgettext          -d$(DOMAIN) -LGlade  ../fslint.glade -o $(DOMAIN).pot
+	xgettext -k_ -kN_ -d$(DOMAIN) -LPython ../fslint-gui   -o $(DOMAIN).pot -j
 
 #update all po fles
 update-po: $(DOMAIN).pot
 	for po in *.po; do \
 		lingua=`basename $$po .po`; \
-	        mv $$lingua.po $$lingua.old.po; \
-		if msgmerge -o $$lingua.po $$lingua.old.po $(DOMAIN).pot; then \
+		mv $$lingua.po $$lingua.old.po; \
+		if msgmerge -N -o $$lingua.po $$lingua.old.po $(DOMAIN).pot; then \
 		    rm $$lingua.old.po; \
 		else \
 		    rm -f $$lingua.po; \

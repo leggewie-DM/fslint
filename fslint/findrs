@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # findrs - find files that have lines with trailing whitespace
-# Copyright © 2000-2006 by Pádraig Brady <P@draigBrady.com>.
+# Copyright © 2000-2007 by Pádraig Brady <P@draigBrady.com>.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,21 +29,46 @@ script_dir=`readlink -f "$script_dir"` #Make sure absolute path
 Usage() {
 	ProgName=`basename "$0"`
 	echo "find Redundant whiteSpace.
-Usage: $ProgName [-c] [[-r] [-f] paths(s) ...]
+Usage: $ProgName [-w] [-t[#]] [-c] [[-r] [-f] paths(s) ...]
 
-If -c specified then the number of lines in each
-file, with redundant whitespace is reported, in addition
+-w enables mode to report whitespace at the end of lines.
+This is the default mode if none specified.
+
+-t enables mode to report erroneous mixing of indenting
+spaces and tabs (on a single line).
+If a number is passed to -t it sets the width of the tabs,
+which allows for more thorough checking.
+
+If -c specified then the number of lines in each file,
+with problematic whitespace is reported, in addition
 to the file names. Note this will take longer.
+
+If --view specified then the erroneous whitespace found
+is highlighted using vim.
 
 If no path(s) specified then the currrent directory is assumed."
 	exit
 }
+
+#Note in the following grep expression there's a space and tab in []
+#and the second [] contains a CR so it works for DOS files
+eol='[ 	]+[]*$'
 
 for arg
 do
 	case "$arg" in
 	-c)
 		count="yes" ;;
+	--view)
+		view="yes" ;;
+	-w)
+		eol_specified="yes" ;;
+	-t*)
+		#keep only last 2 digits
+		ts=`echo $arg|tr -cd '[:digit:]'|sed 's/^0*//;s/.*\(..\)/\1/'`
+		[ -z "$ts" ] && ts=8 #very rare to have larger than this
+		at_start='^[ 	]*'
+		tabs="$at_start( 	|	 {$ts,})" ;;
 	-h|--help|-help)
 		Usage ;;
 	-v|--version)
@@ -53,20 +78,29 @@ do
 	esac
 done
 
+if [ -z "$eol_specified" ] && [ "$tabs" ]; then
+	re="$tabs"
+elif [ "$tabs" ] ; then
+	re="$tabs|$eol"
+else
+	re="$eol"
+fi
+
 . $script_dir/supprt/getfpf "$argsToPassOn"
 
-find "$@" -type f -size +0c -printf "$FPF\0" |
+find "$@" -type f -size +0c ! -name "*$LF*" -printf "$FPF\0" |
+sort -zu | #merge files (indirectly) specified multiple times
 xargs -r0 file |
 grep ":.* text" |
 cut -f1 -d: -s |
 tr '\n' '\0' |
-#Note in the following grep expression there's a space and tab in []
-#and the second [] contains a CR so it works for DOS files
-if [ "$count" = "yes" ]; then
-	xargs -r0 grep -Ec "[ 	]+[]*$" |
+if [ "$view" = "yes" ]; then
+	xargs -r0 grep -nE "$re" |
+	$script_dir/supprt/rmlint/view_ws.sh -
+elif [ "$count" = "yes" ]; then
+	xargs -r0 grep -Ec "$re" |
 	grep -vE "(:0$|^0$)" |
-	sort -k2,2nr -t :
+	sort -k2,2nr -t:
 else
-	xargs -r0 grep -El "[ 	]+[]*$"
+	xargs -r0 grep -El "$re"
 fi
-

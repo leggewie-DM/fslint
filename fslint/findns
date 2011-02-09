@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # findns - find non stripped executables
-# Copyright © 2000-2006 by Pádraig Brady <P@draigBrady.com>.
+# Copyright © 2000-2007 by Pádraig Brady <P@draigBrady.com>.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,10 +55,11 @@ else
 	. $script_dir/supprt/getfpf "$argsToPassOn"
 fi
 
-find "$@" -type f -perm +111 -printf "%i\t$FPF\n" |
+find "$@" -type f -perm +111 ! -name "*$LF*" -printf "%i\t$FPF\n" |
+sort -u |          #merge files (indirectly) specified multiple times
 #sorting by inodes runs in 17s for my 2250 binaries
 #compared to 20s without
-sort -k1,1n |
+sort -k1,1n | #sort by inodes
 cut -f2- |
 tr '\n' '\0' |
 xargs -r0 file |
