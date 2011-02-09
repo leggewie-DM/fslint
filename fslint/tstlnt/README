@@ -1,0 +1,4 @@
+These directories are used as test input to the scripts
+
+Note to create files with weird names for testing, the following
+construct is useful: echo -e "tes\nt\0" | xargs -0 touch

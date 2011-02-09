@@ -1,0 +1,3 @@
+work out which bits to set in ELF header to represent
+a non-stripped program (to file at least). See
+linuxassembly.org for a valid 45 byte ELF program.
