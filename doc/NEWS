@@ -1,4 +1,26 @@
-2.26 20/05/2008
+2.28 09/09/08
+	* Translations:
+		* Updated: Turkish, French, German, Spanish, Malay,
+		  Dutch, Serbian, Chinese.
+	* Fixes:
+		* Better handle paths with unusual characters when
+		  searching for suspect symbolic links.
+		* Work around a python bug triggered when the disk
+		  wastage of a group of duplicate files is > 2GB.
+		* Fix "fix whitespace" script to remove trailing tabs.
+		* Tweak some ancillary scripts to run on dash (ubuntu).
+		* Fix the desktop menu file which broke the build on Mandriva.
+	* Improvements:
+		* Add support in the GUI for opening files in the
+		  registered default desktop application.
+		* Update icon.
+		* Improve layout of options in "redundant whitespace" tab.
+		* Support from Marcus Habermehl for Arch linux (pacman)
+		  in the "Installed Packages" function.
+		* Patch from David Geller to improve readability of
+		  output from findup in "dry run" mode.
+
+2.26 20/05/08
 	* Translations:
 		* Added: Czech, Turkish.
 		* Updated: French, German, Malay.

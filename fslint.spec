@@ -2,9 +2,9 @@
 %define suse %([ -f /etc/SuSE-release ] && echo 1 || echo 0)
 
 Name:           fslint
-Version:        2.26
+Version:        2.28
 %if %{mandriva}
-Release:        1.mdk
+Release:        1.mdv
 %endif
 %if %{suse}
 Release:        1.suse
@@ -80,7 +80,6 @@ cp -a man/* \
 make -C po DESTDIR=$RPM_BUILD_ROOT LOCALEDIR=%{_datadir}/locale install
 
 desktop-file-install \
-  --vendor author \
   --dir $RPM_BUILD_ROOT%{_datadir}/applications \
   --mode 644 \
   %{name}.desktop
