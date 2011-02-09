@@ -27,7 +27,7 @@ import locale
 import gtk
 import gtk.glade
 
-import os, sys, time, stat, tempfile
+import types, os, sys, time, stat, tempfile
 
 # Maintain compatibility with Python 2.2 and below,
 # while getting rid of warnings in newer pyGtks.
@@ -126,7 +126,6 @@ class i18n:
         then try to convert to utf8 using preferred encoding while
         also replacing undisplayable or invalid characters.
         Exclude contains control chars you don't want to translate."""
-        import types
         if type(orig) == types.UnicodeType:
             uc=orig
         else:
@@ -180,7 +179,7 @@ try:
         sys.exit(None)
 
     if ("--version","") in lOpts:
-        print "FSlint 2.24"
+        print "FSlint 2.26"
         sys.exit(None)
 except getopt.error, msg:
     print msg
@@ -207,6 +206,45 @@ def human_num(num, divisor=1, power=""):
     else:
         num = locale.format("%4ld  ",num,1)
     return "%s%s" % (num,power)
+
+class pathInfo:
+    """Gets path info appropriate for display, i.e.
+        (ls_colour, du, size, uid, gid, ls_date, mtime)"""
+
+    def __init__(self, path):
+        stat_val = os.lstat(path)
+
+        date = time.ctime(stat_val[stat.ST_MTIME])
+        month_time = date[4:16]
+        year = date[-5:]
+        timediff = time.time()-stat_val[stat.ST_MTIME]
+        if timediff > 15552000: #6months
+            date = month_time[0:6] + year
+        else:
+            date = month_time
+
+        mode = stat_val[stat.ST_MODE]
+        if stat.S_ISREG(mode):
+            colour = '' #default
+            if mode & (stat.S_IXGRP|stat.S_IXUSR|stat.S_IXOTH):
+                colour = "#00C000"
+        elif stat.S_ISDIR(mode):
+            colour = "blue"
+        elif stat.S_ISLNK(mode):
+            colour = "cyan"
+            if not os.path.exists(path):
+                colour = "#C00000"
+        else:
+            colour = "tan"
+
+        self.ls_colour = colour
+        self.du = stat_val.st_blocks*512
+        self.size = stat_val[stat.ST_SIZE]
+        self.uid = stat_val[stat.ST_UID]
+        self.gid = stat_val[stat.ST_GID]
+        self.ls_date = date
+        self.mtime = stat_val[stat.ST_MTIME]
+        self.inode = stat_val[stat.ST_INO]
 
 class GladeWrapper:
     """
@@ -368,7 +406,8 @@ class dlgUserInteraction(GladeWrapper):
     button is already available, then there's no point in
     translating the passed in string.
     """
-    def init(self, app, message, buttons, entry_default):
+    def init(self, app, message, buttons, entry_default,
+             again=False, again_val=True):
         for text in buttons:
             try:
                 stock_text=getattr(gtk,"STOCK_"+text.upper())
@@ -384,15 +423,26 @@ class dlgUserInteraction(GladeWrapper):
         self.app = app
         self.lblmsg.set_text(message)
         self.lblmsg.show()
+        self.response=None
         if message.endswith(":"):
             if entry_default:
                 self.entry.set_text(entry_default)
             self.entry.show()
+            self.input=None
         else:
             self.entry.hide()
+        if again:
+            self.again=again_val
+            if type(again) == types.StringType:
+                self.chkAgain.set_label(again)
+                self.chkAgain.set_active(again_val)
+            #Dialog seems to give focus to first available widget,
+            #So undo the focus on the check box
+            self.GtkWindow.action_area.get_children()[-1].grab_focus()
+            self.chkAgain.show()
+
 
     def show(self):
-        self.response=self.input=None
         self.GtkWindow.set_transient_for(self.app.GtkWindow)#center on main win
         self.GtkWindow.show() #Note dialog is initially hidden in glade file
         if self.GtkWindow.modal:
@@ -408,8 +458,11 @@ class dlgUserInteraction(GladeWrapper):
             gtk.main_quit()
 
     def button_clicked(self, button):
-        self.input = self.entry.get_text()
         self.response = button.get_data("text")
+        if self.entry.flags() & gtk.VISIBLE:
+            self.input = self.entry.get_text()
+        if self.chkAgain.flags() & gtk.VISIBLE:
+            self.again = self.chkAgain.get_active()
         self.GtkWindow.destroy()
 
 class dlgPathSel(GladeWrapper):
@@ -450,7 +503,7 @@ class dlgPathSel(GladeWrapper):
             file = self.GtkWindow.get_filename()
             if os.path.exists(file):
                 if os.path.isfile(file):
-                    (response, input) = self.app.msgbox(
+                    (response,) = self.app.msgbox(
                       _("Do you want to overwrite?\n") + file,
                       ('Yes', 'No')
                     )
@@ -473,6 +526,8 @@ class fslint(GladeWrapper):
         GladeWrapper.__init__(self, Filename, WindowName)
         self.dlgPathSel = dlgPathSel(liblocation+"/fslint.glade", "PathSel")
         self.dlgPathSel.init(self)
+        self.confirm_delete = True
+        self.confirm_clean = True
         #Just need to keep this tuple in sync with tabs
         (self.mode_up, self.mode_pkgs, self.mode_nl, self.mode_sn,
          self.mode_tf, self.mode_bl, self.mode_id, self.mode_ed,
@@ -507,7 +562,7 @@ class fslint(GladeWrapper):
             else:
                 self.ShowErrors(_("Invalid path [") + path + "]")
         for bad_dir in ['/lost+found','/dev','/proc','/sys','/tmp',
-                        '/*.svn','/*CVS']:
+                        '*/.svn','*/CVS', '*/.git']:
             self.addDirs(self.bad_dirs, bad_dir)
         self._alloc_mouse_cursors()
         self.mode=0
@@ -520,6 +575,7 @@ class fslint(GladeWrapper):
         self.pkg_info.modify_base(gtk.STATE_NORMAL,self.bg_colour)
         #Other GUI stuff that ideally [lib]glade should support
         self.clist_pkgs.set_column_visibility(2,0)
+        self.clist_pkgs.set_column_visibility(3,0)
         self.clist_ns.set_column_justification(2,gtk.JUSTIFY_RIGHT)
 
     def _alloc_mouse_cursors(self):
@@ -541,13 +597,12 @@ class fslint(GladeWrapper):
             self.LEFT_PTR_WATCH=None #default cursor
         self.SB_V_DOUBLE_ARROW=gtk.gdk.Cursor(gtk.gdk.SB_V_DOUBLE_ARROW)
         self.XTERM=gtk.gdk.Cursor(gtk.gdk.XTERM) #I beam
+        self.WATCH=gtk.gdk.Cursor(gtk.gdk.WATCH) #hourglass
 
     def get_fslint(self, command, delim='\n'):
         self.fslintproc = subProcess(command)
-        count=0
+        self.status.set_text(_("searching")+"...")
         while self.fslintproc.read(timeout=0.1):
-            self.status.set_text(_("searching")+"."*(count%10))
-            count+=1
             while gtk.events_pending(): gtk.main_iteration(False)
             if self.stopflag:
                 self.fslintproc.kill()
@@ -598,8 +653,6 @@ class fslint(GladeWrapper):
             else:
                 exclude_dirs += ' -o -path "'
             path=self.bad_dirs.get_row_data(row)
-            if path[-1]=='/': #find -path doesn't match dirs with trailing /
-                path=path[:-1]
             exclude_dirs += path + '"'
         if exclude_dirs != "":
             exclude_dirs += ' \) -prune -o '
@@ -630,6 +683,7 @@ class fslint(GladeWrapper):
             paths_to_remove.reverse() #so deleting works correctly
             for row in paths_to_remove:
                 dirlist.remove(row)
+            dirlist.select_row(dirlist.focus_row,0)
 
     def clist_alloc_colour(self, clist, colour):
         """cache colour allocation for clist
@@ -662,7 +716,7 @@ class fslint(GladeWrapper):
         clist.set_background(clist.rows-1,self.bg_colour)
         clist.set_selectable(clist.rows-1,0)
 
-    def clist_remove_empty_groups(self, clist):
+    def clist_remove_handled_groups(self, clist):
         row_data = clist.get_data("row_data")
         rowver=clist.rows
         rows_left = range(rowver)
@@ -672,43 +726,16 @@ class fslint(GladeWrapper):
                 if (row == clist.rows-1) or (clist.get_selectable(row+1) ==
                     False):
                     clist.remove(row)
-                    if self.mode != self.mode_pkgs:
-                        row_data.pop(row)
-
-
-    def get_path_info(self, path):
-        """Returns path info appropriate for display, i.e.
-           (color, size, ondisk_size, username, groupname, mtime_ls_date)"""
-
-        stat_val = os.lstat(path)
-
-        date = time.ctime(stat_val[stat.ST_MTIME])
-        month_time = date[4:16]
-        year = date[-5:]
-        timediff = time.time()-stat_val[stat.ST_MTIME]
-        if timediff > 15552000: #6months
-            date = month_time[0:6] + year
-        else:
-            date = month_time
-
-        mode = stat_val[stat.ST_MODE]
-        if stat.S_ISREG(mode):
-            colour = '' #default
-            if mode & (stat.S_IXGRP|stat.S_IXUSR|stat.S_IXOTH):
-                colour = "#00C000"
-        elif stat.S_ISDIR(mode):
-            colour = "blue"
-        elif stat.S_ISLNK(mode):
-            colour = "cyan"
-            if not os.path.exists(path):
-                colour = "#C00000"
-        else:
-            colour = "tan"
-
-        size=stat_val.st_blocks*512
-
-        return (colour, stat_val[stat.ST_SIZE], size, stat_val[stat.ST_UID],
-                stat_val[stat.ST_GID], date, stat_val[stat.ST_MTIME])
+                    row_data.pop(row)
+            else: #remove single item groups
+                if (row == clist.rows-1) and (clist.get_selectable(row-1) ==
+                    False):
+                    clist.remove(row)
+                    row_data.pop(row)
+                elif (clist.get_selectable(row-1) == False) and \
+                     (clist.get_selectable(row+1) == False):
+                    clist.remove(row)
+                    row_data.pop(row)
 
     def whatRequires(self, packages, level=0):
         if not packages: return
@@ -758,7 +785,7 @@ on your system at present."))
                 pkg_size = pkg_size*1024
             pkg_tot += pkg_size
             clist_pkgs.append([pkg_name,human_num(pkg_size,1000).strip(),
-                               "%010ld"%pkg_size])
+                               "%010ld"%pkg_size,"0"])
             clist_pkgs.set_row_data(row, pkg_name)
             row=row+1
 
@@ -778,8 +805,9 @@ on your system at present."))
         po, pe = self.get_fslint("./findrs " + options + self.findParams)
         row = 0
         for line in po:
-            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
-            self.clist_append_path(clist_rs, line, colour, str(fsize), date)
+            pi = pathInfo(line)
+            self.clist_append_path(clist_rs, line,
+                                   pi.ls_colour, str(pi.size), pi.ls_date)
             row=row+1
 
         return (str(row) + _(" files"), pe)
@@ -792,14 +820,14 @@ on your system at present."))
 
         unstripped=[]
         for line in po:
-            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
-            unstripped.append((fsize, line, date))
+            pi = pathInfo(line)
+            unstripped.append((pi.size, line, pi.ls_date))
         unstripped.sort()
         unstripped.reverse()
 
         row = 0
-        for fsize, path, date in unstripped:
-            self.clist_append_path(clist_ns, path, '', human_num(fsize), date)
+        for size, path, ls_date in unstripped:
+            self.clist_append_path(clist_ns, path, '', human_num(size), ls_date)
             row += 1
 
         return (str(row) + _(" unstripped binaries"), pe)
@@ -808,8 +836,7 @@ on your system at present."))
         po, pe = self.get_fslint("./finded " + self.findParams, '\0')
         row = 0
         for line in po:
-            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
-            self.clist_append_path(clist_ed, line, '', date)
+            self.clist_append_path(clist_ed, line, '', pathInfo(line).ls_date)
             row += 1
 
         return (str(row) + _(" empty directories"), pe)
@@ -818,9 +845,9 @@ on your system at present."))
         po, pe = self.get_fslint("./findid " + self.findParams, '\0')
         row = 0
         for record in po:
-            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(record)
-            self.clist_append_path(clist_id, record, colour,
-                                   str(uid), str(gid), str(fsize), date)
+            pi = pathInfo(record)
+            self.clist_append_path(clist_id, record, pi.ls_colour, str(pi.uid),
+                                   str(pi.gid), str(pi.size), ps.ls_date)
             row += 1
 
         return (str(row) + _(" files"), pe)
@@ -855,9 +882,9 @@ on your system at present."))
         row = 0
         byteWaste = 0
         for line in po:
-            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
-            self.clist_append_path(clist_tf, line, '', str(fsize), date)
-            byteWaste+=size
+            pi = pathInfo(line)
+            self.clist_append_path(clist_tf, line, '', str(pi.size), pi.ls_date)
+            byteWaste+=pi.du
             row += 1
 
         return (human_num(byteWaste) + _(" bytes wasted in ") +
@@ -897,9 +924,10 @@ on your system at present."))
                 self.clist_append_group_row(clist_sn, ['','',''])
                 findsn_groups += 1
             else:
-                colour,fsize,size,uid,gid,date,mtime=self.get_path_info(record)
-                self.clist_append_path(clist_sn, record, colour, str(fsize))
-                clist_sn.set_row_data(clist_sn.rows-1,mtime)
+                pi = pathInfo(record)
+                self.clist_append_path(clist_sn, record,
+                                       pi.ls_colour, str(pi.size))
+                clist_sn.set_row_data(clist_sn.rows-1, pi.mtime)
                 findsn_number += 1
             row += 1
         if findsn_number:
@@ -919,17 +947,16 @@ on your system at present."))
 
         row=0
         for record in po:
-            colour,fsize,size,uid,gid,date,mtime = self.get_path_info(record)
-            self.clist_append_path(clist_nl, record, colour)
+            self.clist_append_path(clist_nl, record, pathInfo(record).ls_colour)
             row += 1
 
         return (str(row) + _(" files"), pe)
 
     def findup(self, clist_dups):
-        po, pe = self.get_fslint("./findup " + self.findParams + " -f")
+        po, pe = self.get_fslint("./findup " + self.findParams)
 
         numdups = 0
-        size = fsize = 0
+        du = size = 0
         dups = []
         alldups = []
         inodes = {}
@@ -938,20 +965,24 @@ on your system at present."))
         for line in po:
             if line == '': #grouped == 1
                 if len(inodes)>1:
-                    alldups.append(((numdups-1)*size, numdups, fsize, dups))
+                    alldups.append(((numdups-1)*du, numdups, size, dups))
                 dups = []
                 numdups = 0
                 inodes = {}
             else:
-                colour,fsize,size,uid,gid,date,mtime = self.get_path_info(line)
-                dups.append((line,date,mtime))
-                inode = os.lstat(line)[stat.ST_INO]
-                if not inodes.has_key(inode):
-                    inodes[inode] = True
-                    numdups = numdups + 1
+                try:
+                    pi = pathInfo(line)
+                    size, du = (pi.size, pi.du)
+                    dups.append((line, pi.ls_date, pi.mtime))
+                    if not inodes.has_key(pi.inode):
+                        inodes[pi.inode] = True
+                        numdups = numdups + 1
+                except OSError:
+                    #file may have been deleted, changed permissions, ...
+                    self.ShowErrors(str(sys.exc_value)+'\n')
         else:
             if len(inodes)>1:
-                alldups.append(((numdups-1)*size, numdups, fsize, dups))
+                alldups.append(((numdups-1)*du, numdups, size, dups))
 
         alldups.sort()
         alldups.reverse()
@@ -959,10 +990,10 @@ on your system at present."))
         byteWaste = 0
         numWaste = 0
         row=0
-        for groupWaste, groupSize, FilesSize, files in alldups:
+        for groupWaste, groupSize, size, files in alldups:
             byteWaste += groupWaste
             numWaste += groupSize - 1
-            groupHeader = ["%d x %s" % (groupSize, human_num(FilesSize)),
+            groupHeader = ["%d x %s" % (groupSize, human_num(size)),
                            "(%s)" % human_num(groupWaste),
                            _("bytes wasted")]
             self.clist_append_group_row(clist_dups, groupHeader)
@@ -1008,6 +1039,7 @@ on your system at present."))
                 width,height=window.get_size()
                 if width==handle_size or height==handle_size:
                     window.set_cursor(cursor)
+        while gtk.events_pending(): gtk.main_iteration(False)
 
     def look_busy(self):
         self.find.hide()
@@ -1023,33 +1055,40 @@ on your system at present."))
         self.find.grab_focus() #as it already would have been in focus
         self.set_cursor(None)
 
-    def msgbox(self, message, buttons=('Ok',), entry_default=None):
+    def msgbox(self, message, buttons=('Ok',), entry_default=None,
+               again=False, again_val=True):
         msgbox=dlgUserInteraction(liblocation+"/fslint.glade","UserInteraction")
-        msgbox.init(self, message, buttons, entry_default)
+        msgbox.init(self, message, buttons, entry_default, again, again_val)
         msgbox.show()
-        return (msgbox.response, msgbox.input)
+        response = (msgbox.response,)
+        if hasattr(msgbox, "input"):
+            response += (msgbox.input,)
+        if hasattr(msgbox, "again"):
+            response += (msgbox.again,)
+        return response
 
+    #Return tuple of booleans meaning: (user_ok_with_action, ask_again)
     def check_user(self, question):
         self.ClearErrors()
         #remove as status from previous operation could be confusing
         self.status.delete_text(0,-1)
         clist = self.clists[self.mode]
         if not clist.rows:
-            return False #Be consistent
+            return False, True #Be consistent
                          #All actions buttons do nothing if no results
         paths = clist.selection
         if len(paths) == 0:
             self.ShowErrors(_("None selected"))
-            return False
+            return False, True
         else:
             if len(paths) == 1:
                 question += _(" this item?\n")
             else:
                 question += _(" these %d items?\n") % len(paths)
-            (response, input) = self.msgbox(question, ('Yes', 'No'))
+            (response, again) = self.msgbox(question, ('Yes', 'No'), again=True)
             if response != "Yes":
-                return False
-            return True
+                return (False, again)
+            return (True, again)
 
     #################
     # Signal handlers
@@ -1067,12 +1106,29 @@ on your system at present."))
         self.dlgPathSel.show()
         if not self.dlgPathSel.canceled:
             path = self.dlgPathSel.GtkWindow.get_filename()
+            path = os.path.normpath(path)
             self.addDirs(self.ok_dirs, path)
 
     def on_addBadDir_clicked(self, event):
         self.dlgPathSel.show()
         if not self.dlgPathSel.canceled:
             path = self.dlgPathSel.GtkWindow.get_filename()
+            path = os.path.normpath(path)
+            #Note find -path doesn't match dirs with trailing /
+            #and normpath strips trailing / among other things
+            #XXX: The following is not robust. We really should
+            #split specifying wildcards and paths
+            if not os.path.exists(path): #probably a wildcard?
+                #hacky way to get just user specified component
+                dirs = path.split('/')
+                if len(dirs) > 2:
+                    for i in range(len(dirs)):
+                        path = '/'.join(dirs[:i+1])
+                        if path and not os.path.exists(path):
+                            path = '/'.join(dirs[i:])
+                            break
+                if path.find('/') == -1:
+                    path = "*/" + path #more accurate
             self.addDirs(self.bad_dirs, path)
 
     def on_removeOkDir_clicked(self, event):
@@ -1189,6 +1245,13 @@ on your system at present."))
             pass
         return True
 
+    #Note Ctrl-C as well as doing "copy path" which is handled here,
+    #also cancels a find in progress. That doesn't need to be handled here
+    #because the stop button grabs focus during the find operation.
+    #
+    #Note also that, we need a global handler here for all lists
+    #as in GTK, keyboard events specifically are sent to the window first,
+    #rather than the widget. The alternative is to add handlers to all lists.
     def on_fslint_keypress(self, button, event):
         #ingore capslock and numlock
         state = event.state & ~(gtk.gdk.LOCK_MASK | gtk.gdk.MOD2_MASK)
@@ -1199,6 +1262,13 @@ on your system at present."))
         if state == 0:
             if event.keyval in (ksyms.F2,):
                 self.on_rename_activate(event)
+            if event.keyval in (ksyms.Delete,):
+                if self.ok_dirs.flags() & gtk.HAS_FOCUS:
+                    self.on_removeOkDir_clicked(event)
+                elif self.bad_dirs.flags() & gtk.HAS_FOCUS:
+                    self.on_removeBadDir_clicked(event)
+                elif self.clists[self.mode].flags() & gtk.HAS_FOCUS:
+                    self.on_delSelected_clicked(event)
 
     def on_saveAs_clicked(self, event):
         clist = self.clists[self.mode]
@@ -1292,7 +1362,7 @@ on your system at present."))
                     os.rename(path_name, new_encoded_path)
                     row_data.pop(row)
                     clist.remove(row)
-                    self.clist_remove_empty_groups(clist)
+                    self.clist_remove_handled_groups(clist)
                 except OSError:
                     self.ShowErrors(str(sys.exc_value)+'\n')
 
@@ -1396,82 +1466,17 @@ on your system at present."))
     def on_selection_clicked(self, widget):
         self.on_selection_menu_button_press_event(self.selection, None)
 
-    def on_delSelected_clicked(self, event):
-        if self.mode == self.mode_pkgs:
-            if os.geteuid() != 0:
-                self.msgbox(
-                  _("Sorry, you must be root to delete system packages.")
-                )
-                return
-        if not self.check_user(_("Are you sure you want to delete")):
-            return
-        clist = self.clists[self.mode]
-        row_data = clist.get_data("row_data")
-        paths_to_remove = clist.selection
-        paths_to_remove.sort() #selection order irrelevant/problematic
-        paths_to_remove.reverse() #so deleting works correctly
-        numDeleted = 0
-        if self.mode == self.mode_pkgs:
-            pkgs_selected = []
-            for row in paths_to_remove:
-                package = clist.get_row_data(row)
-                pkgs_selected.append(package)
-            self.status.set_text(_("Calculating dependencies..."))
-            while gtk.events_pending(): gtk.main_iteration(False)
-            all_deps=self.whatRequires(pkgs_selected)
-            if len(all_deps) > len(pkgs_selected):
-                num_new_pkgs = 0
-                for package in all_deps:
-                    if package not in pkgs_selected:
-                        num_new_pkgs += 1
-                        #Note clist.find_row_from_data() only compares pointers
-                        for row in range(clist.rows):
-                            if package == clist.get_row_data(row):
-                                clist.select_row(row,0)
-                self.msgbox(
-                  _("%d extra packages need to be deleted.\n") % num_new_pkgs +
-                  _("Please review the updated selection.")
-                )
-                #Note this is not ideal as it's difficult for users
-                #to get info on selected packages (Ctrl click twice).
-                #Should really have a seperate marked_for_deletion  column.
-                self.status.set_text("")
-                return
-
-            self.status.set_text(_("Removing packages..."))
-            while gtk.events_pending(): gtk.main_iteration(False)
-            if dist_type.rpm:
-                cmd="rpm -e "
-            elif dist_type.deb:
-                cmd="dpkg --purge "
-            cmd+=' '.join(pkgs_selected) + " >/dev/null 2>&1"
-            os.system(cmd)
-
-        clist.freeze()
-        for row in paths_to_remove:
-            if self.mode != self.mode_pkgs:
-                try:
-                    path=row_data[row][:-1] #strip trailing '\n'
-                    if os.path.isdir(path):
-                        os.rmdir(path)
-                    else:
-                        os.unlink(path)
-                except:
-                    etype, emsg, etb = sys.exc_info()
-                    self.ShowErrors(str(emsg)+'\n')
-                    continue
-                row_data.pop(row)
-            clist.remove(row)
-            numDeleted += 1
-
-        self.clist_remove_empty_groups(clist)
-
-        clist.columns_autosize()
-        clist.thaw()
-        status = str(numDeleted) + _(" items deleted")
-        if self.mode == self.mode_pkgs:
-           status += ". " + human_space_left('/')
-        self.status.set_text(status)
+    def clist_pkgs_sort_by_selection(self, clist):
+        selection = clist.selection
+        for row in range(clist.rows):
+            if row in selection:
+                clist.set_text(row,3,"1")
+            else:
+                clist.set_text(row,3,"0")
+        clist.set_sort_type(gtk.SORT_DESCENDING)
+        clist.set_sort_column(3)
+        clist.sort()
+        clist.moveto(0,0,0.0,0.0)
 
     def on_clist_pkgs_click_column(self, clist, col):
         self.clist_pkgs_order[col] = not self.clist_pkgs_order[col]
@@ -1489,7 +1494,7 @@ on your system at present."))
             clist.set_sort_column(0)
         else:
             clist.set_sort_column(2)
-        clist.sort()
+        clist.sort() #note ascii sort (locale ignored)
         #could instead just use our "row_data" and
         #repopulate the gtkclist with something like:
         #row_data = clist.get_data("row_data")
@@ -1503,7 +1508,6 @@ on your system at present."))
             #clist.set_focus_row(last_selected_row)
         else:
             clist.moveto(0,0,0.0,0.0)
-
 
     #Note the events and event ordering provided by the GtkClist
     #make it very hard to provide robust and performant handlers
@@ -1540,6 +1544,97 @@ on your system at present."))
         self.pkg_info.get_buffer().set_text(I18N.displayable_utf8(lines,"\n"))
         del(pkg_process)
 
+    def on_delSelected_clicked(self, src):
+        if self.mode == self.mode_pkgs:
+            if os.geteuid() != 0:
+                self.msgbox(
+                  _("Sorry, you must be root to delete system packages.")
+                )
+                return
+        if self.confirm_delete:
+            (response, self.confirm_delete) =\
+            self.check_user(_("Are you sure you want to delete"))
+            if not response:
+                return
+        self.set_cursor(self.WATCH)
+        clist = self.clists[self.mode]
+        row_data = clist.get_data("row_data")
+        paths_to_remove = clist.selection
+        paths_to_remove.sort() #selection order irrelevant/problematic
+        paths_to_remove.reverse() #so deleting works correctly
+        numDeleted = 0
+        if self.mode == self.mode_pkgs:
+            #get pkg names to delete
+            pkgs_selected = []
+            for row in paths_to_remove:
+                package = clist.get_row_data(row)
+                pkgs_selected.append(package)
+            #determine if we need to select more packages
+            self.status.set_text(_("Calculating dependencies..."))
+            while gtk.events_pending(): gtk.main_iteration(False)
+            all_deps=self.whatRequires(pkgs_selected)
+            if len(all_deps) > len(pkgs_selected):
+                num_new_pkgs = 0
+                for package in all_deps:
+                    if package not in pkgs_selected:
+                        num_new_pkgs += 1
+                        #Note clist.find_row_from_data() only compares pointers
+                        for row in range(clist.rows):
+                            if package == clist.get_row_data(row):
+                                clist.select_row(row,0)
+
+                #make it easy to review by grouping all selected packages
+                self.clist_pkgs_sort_by_selection(clist)
+
+                self.set_cursor(None)
+                self.msgbox(
+                  _("%d extra packages need to be deleted.\n") % num_new_pkgs +
+                  _("Please review the updated selection.")
+                )
+                #Note this is not ideal as it's difficult for users
+                #to get info on selected packages (Ctrl click twice).
+                #Should really have a seperate marked_for_deletion  column.
+                self.status.set_text("")
+                return
+
+            self.status.set_text(_("Removing packages..."))
+            while gtk.events_pending(): gtk.main_iteration(False)
+            if dist_type.rpm:
+                cmd="rpm -e "
+            elif dist_type.deb:
+                cmd="dpkg --purge "
+            cmd+=' '.join(pkgs_selected) + " >/dev/null 2>&1"
+            os.system(cmd)
+
+        clist.freeze()
+        for row in paths_to_remove:
+            if self.mode != self.mode_pkgs:
+                try:
+                    path=row_data[row][:-1] #strip trailing '\n'
+                    if os.path.isdir(path):
+                        os.rmdir(path)
+                    else:
+                        os.unlink(path)
+                except:
+                    etype, emsg, etb = sys.exc_info()
+                    self.ShowErrors(str(emsg)+'\n')
+                    continue
+                row_data.pop(row)
+            clist.remove(row)
+            numDeleted += 1
+
+        if self.mode != self.mode_pkgs:
+            self.clist_remove_handled_groups(clist)
+
+        clist.select_row(clist.focus_row,0)
+
+        clist.thaw()
+        status = str(numDeleted) + _(" items deleted")
+        if self.mode == self.mode_pkgs:
+           status += ". " + human_space_left('/')
+        self.status.set_text(status)
+        self.set_cursor(None)
+
     def on_autoMerge_clicked(self, event):
         self.ClearErrors()
         self.status.delete_text(0,-1)
@@ -1553,10 +1648,11 @@ on your system at present."))
         if len(paths_to_leave):
             question+=_("(Ignoring those selected)\n")
 
-        (response, input) = self.msgbox(question, ('Yes', 'No'))
+        (response,) = self.msgbox(question, ('Yes', 'No'))
         if response != "Yes":
             return
 
+        self.set_cursor(self.WATCH)
         newGroup = 0
         row_data=clist.get_data("row_data")
         for row in range(clist.rows):
@@ -1593,10 +1689,11 @@ on your system at present."))
                         os.unlink(tmpfile)
                     except:
                         pass
+        self.set_cursor(None)
 
     def on_autoClean_clicked(self, event):
         if self.mode == self.mode_rs and self.chkTabs.get_active():
-            (response, input) = self.msgbox(
+            (response,) = self.msgbox(
               _("Which indenting method do you want to convert to?"),
               (N_('Tabs'), N_('Spaces'), 'Cancel')
             )
@@ -1606,9 +1703,14 @@ on your system at present."))
                 indents="--indent-tabs"
             else:
                 return
-        elif not self.check_user(_("Are you sure you want to clean")):
-            return
+        else:
+            if self.confirm_clean:
+                (response, self.confirm_clean) =\
+                self.check_user(_("Are you sure you want to clean"))
+                if not response:
+                    return
 
+        self.set_cursor(self.WATCH)
         if self.mode == self.mode_rs:
             if not self.chkTabs.get_active():
                 indents="''"
@@ -1651,6 +1753,7 @@ on your system at present."))
         status =  str(numCleaned) + _(" items cleaned (") + \
                   human_num(totalSaved) + _(" bytes saved)")
         self.status.set_text(status)
+        self.set_cursor(None)
 
 FSlint=fslint(liblocation+"/fslint.glade", "fslint")
 
