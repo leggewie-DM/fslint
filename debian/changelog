@@ -1,3 +1,24 @@
+fslint (2.42-2) unstable; urgency=low
+
+  * new upstream release. LP: #739109
+    2.42-1 was a private release by Pádraig that never made it into Debian
+  * debian/control:
+    - add myself to Uploaders and set DMUA
+    - bump standards version to 3.9.2
+      + add $(misc:Depends) to runtime dependencies
+      + improve short description for binary package
+    - set VCS information
+  * debian/rules: leverage the power of dh7 rules.tiny
+    - fixes another lintian error
+    - bump debian/compat from 5 to 7
+    - bump build-time dependency for debhelper to dh7
+  * debian/clean: remove po/*.mo files before building
+  * debian/copyright: add my copyright for the packaging
+  * debian/source/format: transition to 3.0 quilt format
+  * debian/patches: backported upstream r261 wildcard dialog bug fix
+
+ -- Rolf Leggewie <foss@rolf.leggewie.biz>  Sun, 14 Aug 2011 01:28:11 +0800
+
 fslint (2.42-1) unstable; urgency=low
 
   * bump to release version
