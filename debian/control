@@ -6,7 +6,7 @@ Uploaders: Rolf Leggewie <foss@rolf.leggewie.biz>
 Homepage: http://www.pixelbeat.org/fslint/
 Build-Depends: debhelper (>= 5)
 Build-Depends-Indep: gettext (>= 0.13)
-Standards-Version: 3.9.1
+Standards-Version: 3.9.2
 Vcs-Git: git://git.debian.org/git/collab-maint/fslint.git
 Vcs-Browser: http://git.debian.org/?p=collab-maint/fslint.git
 
