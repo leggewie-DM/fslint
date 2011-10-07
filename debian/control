@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Pádraig Brady <P@draigBrady.com>
 Uploaders: Rolf Leggewie <foss@rolf.leggewie.biz>
 Homepage: http://www.pixelbeat.org/fslint/
-Build-Depends: debhelper (>= 5)
+Build-Depends: debhelper (>= 7.0.50~)
 Build-Depends-Indep: gettext (>= 0.13)
 Standards-Version: 3.9.2
 Vcs-Git: git://git.debian.org/git/collab-maint/fslint.git
