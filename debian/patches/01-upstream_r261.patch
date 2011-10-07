@@ -1,0 +1,28 @@
+Origin: http://code.google.com/p/fslint/source/detail?r=261
+Forwarded: not-needed
+Description: backported upstream r261 wildcard dialog fix
+ This affected only German and Hungarian locale.
+Reviewed-By: Rolf Leggewie <foss@rolf.leggewie.biz>
+
+--- fslint-2.42.orig/po/de.po
++++ fslint-2.42/po/de.po
+@@ -503,7 +503,7 @@ msgstr ""
+ 
+ #: ../fslint-gui:1505
+ msgid "wildcard:"
+-msgstr "Platzhalter"
++msgstr "Platzhalter:"
+ 
+ #: ../fslint-gui:1710
+ msgid "Sorry, you must be root to delete system packages."
+--- fslint-2.42.orig/po/hu.po
++++ fslint-2.42/po/hu.po
+@@ -498,7 +498,7 @@ msgstr ""
+ 
+ #: ../fslint-gui:1505
+ msgid "wildcard:"
+-msgstr "helyettesítő karakter"
++msgstr "helyettesítő karakter:"
+ 
+ #: ../fslint-gui:1710
+ msgid "Sorry, you must be root to delete system packages."
