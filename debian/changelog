@@ -1,3 +1,12 @@
+fslint (2.42-3) unstable; urgency=low
+
+  * control:
+    - drop obsolete DMUA field
+    - bump to dh9 build logic and standard to version 3.9.4
+  * copyright: bump my copyright to 2013
+
+ -- Rolf Leggewie <foss@rolf.leggewie.biz>  Mon, 13 May 2013 16:18:01 +0800
+
 fslint (2.42-2) unstable; urgency=low
 
   * new upstream release. LP: #739109
