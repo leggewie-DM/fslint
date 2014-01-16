@@ -24,7 +24,7 @@ Usage() {
 	echo "find Empty Directory branches.
 Usage: $ProgName [[-r] [-f] paths(s) ...]
 
-If no path(s) specified then the currrent directory is assumed."
+If no path(s) specified then the current directory is assumed."
 	exit
 }
 
@@ -35,13 +35,25 @@ do
 		Usage ;;
 	-v|--version)
 		Version ;;
-	*)
+	*|-r)
+		test "$arg" = "-r" && recurse="false"
 		argsToPassOn="$argsToPassOn $(shell_quote "$arg")" ;;
 	esac
 done
 
 . "$script_dir"/supprt/getfpf -f "$argsToPassOn"
 #forcing -f as if specify an empty dir it would not display
+
+if test "$recurse" = "false"; then
+  find "$@" -empty -type d ! -name "*$LF*" -printf "$FPF\0" |
+  sort -zu | #merge dirs (indirectly) specified multiple times
+  if [ ! -p /proc/self/fd/1 ]; then
+    xargs -r0 ls -b1Ud --
+  else
+    cat
+  fi
+  exit
+fi
 
 #flag trailing / as an error
 if printf "%s\n" "$@" | tr -s '/' | grep -q './$'; then

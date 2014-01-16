@@ -1,3 +1,23 @@
+2.44 13/01/14
+	* Translations:
+		* Added: Polish.
+		* Updated: Galician,Czech,Spanish,France,Romanian,Serbian,
+		  Russian,Swedish,German.
+	* Fixes:
+		* finded now doesn't report passed non empty directories when
+		  not recursing. This regression was introduced in 2.40.
+		* The wildcard selection dialog is displayed correctly again
+		  in German locales. This regression was introduced in 2.42.
+		* File metadata is now maintained when cleaning whitespace.
+		* findup -d now supports file names with trailing whitespace.
+		* Changed the complexity of deleting files from O((n/2)*(n+1))
+		  to O(n), n being the number of items in the GtkCList, not
+		  the number of items being deleted.
+		* findns and findul now work with findutils >= 4.5.11
+	* Improvements:
+		* Add support for selecting all files from a the same folder
+		  as another file.
+
 2.42 29/04/10
 	* Translations:
 		* Added: Catalan, Galician.
