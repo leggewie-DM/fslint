@@ -1,3 +1,12 @@
+fslint (2.44-1) unstable; urgency=low
+
+  * New upstream release
+    - drop all patches as unneccesary for the latest upstream
+  * control: bump to standard 3.9.5.  No further changes.
+  * copyright: bump my copyright to 2014
+
+ -- Rolf Leggewie <foss@rolf.leggewie.biz>  Thu, 16 Jan 2014 23:22:37 +0800
+
 fslint (2.42-3) unstable; urgency=low
 
   * control:
