@@ -1,0 +1,17 @@
+diff --git a/fslint.desktop b/fslint.desktop
+index 014fac5..dcf59a8 100644
+--- a/fslint.desktop
++++ b/fslint.desktop
+@@ -1,8 +1,9 @@
+ [Desktop Entry]
+-Name=FSlint
+-Comment=File System Lint
++Name=FSlint Janitor
++Comment=File System Lint cleaner
+ Exec=fslint-gui
+ Terminal=false
+ Type=Application
+ Icon=fslint_icon
+-Categories=System;Filesystem;GTK;
++Categories=System;Filesystem;GTK;;Utility;
++X-Ubuntu-Gettext-Domain=fslint
