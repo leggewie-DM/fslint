@@ -1,3 +1,9 @@
+fslint (2.44-2) unstable; urgency=low
+
+  * apply upstream r290 to allow fslint to be found more easily
+
+ -- Rolf Leggewie <foss@rolf.leggewie.biz>  Tue, 16 Sep 2014 12:27:56 +0800
+
 fslint (2.44-1) unstable; urgency=low
 
   * New upstream release
