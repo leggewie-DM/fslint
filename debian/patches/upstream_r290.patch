@@ -13,5 +13,5 @@ index 014fac5..dcf59a8 100644
  Type=Application
  Icon=fslint_icon
 -Categories=System;Filesystem;GTK;
-+Categories=System;Filesystem;GTK;;Utility;
++Categories=System;Filesystem;GTK;Utility;
 +X-Ubuntu-Gettext-Domain=fslint
