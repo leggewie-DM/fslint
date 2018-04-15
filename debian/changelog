@@ -1,3 +1,11 @@
+fslint (2.44-3) unstable; urgency=medium
+
+  * patches: fix error in r290 patch
+  * control: update git URIs
+  * copyright: update my copyright to 2018
+
+ -- Rolf Leggewie <foss@rolf.leggewie.biz>  Sun, 15 Apr 2018 18:35:35 +0800
+
 fslint (2.44-2) unstable; urgency=low
 
   * apply upstream r290 to allow fslint to be found more easily
