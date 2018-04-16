@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 9)
 Build-Depends-Indep: gettext (>= 0.13)
 Standards-Version: 3.9.5
 Vcs-Browser: https://github.com/leggewie-DM/fslint
-Vcs-Git: git@github.com:leggewie-DM/fslint.git
+Vcs-Git: https://github.com/leggewie-DM/fslint.git
 
 Package: fslint
 Architecture: all
